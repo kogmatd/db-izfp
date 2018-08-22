@@ -1,0 +1,8 @@
+Acoustic model set	
+===================	
+	
+Config : hmm-0_0.cfg	
+Date   : 2007-10-05	
+dLabPro: 860?	
+UASR   : 282?	
+Host   : FAROUT_1	

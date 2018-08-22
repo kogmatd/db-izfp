@@ -1,0 +1,49 @@
+## UASR class definition file
+## - IZFP Aluminum Sheet Database
+##
+##   first  column: model name
+##   second column: number of states
+##   third  column: voice/unvoiced information
+##   fourth column: abstract model for SMG reclassification
+
+Z00	3	1.0	-	# No fissure
+Z01	0	1.0	-	# Fissure of 1 cm (just a label, no model)
+Z02	0	1.0	-	# Fissure of 2 cm (just a label, no model)
+Z03	0	1.0	-	# Fissure of 3 cm (just a label, no model)
+Z04	0	1.0	-	# Fissure of 4 cm (just a label, no model)
+Z05	0	1.0	-	# Fissure of 5 cm (just a label, no model)
+Z06	0	1.0	-	# Fissure of 6 cm (just a label, no model)
+Z07	0	1.0	-	# Fissure of 7 cm (just a label, no model)
+Z08	0	1.0	-	# Fissure of 8 cm (just a label, no model)
+Z09	0	1.0	-	# Fissure of 9 cm (just a label, no model)
+Z10	0	1.0	-	# Fissure of 10 cm (just a label, no model)
+Z11	0	1.0	-	# Fissure of 11 cm (just a label, no model)
+Z12	0	1.0	-	# Fissure of 12 cm (just a label, no model)
+Z13	0	1.0	-	# Fissure of 13 cm (just a label, no model)
+Z14	0	1.0	-	# Fissure of 14 cm (just a label, no model)
+Z15	0	1.0	-	# Fissure of 15 cm (just a label, no model)
+Z16	0	1.0	-	# Fissure of 16 cm (just a label, no model)
+Z17	0	1.0	-	# Fissure of 17 cm (just a label, no model)
+Z18	0	1.0	-	# Fissure of 18 cm (just a label, no model)
+Z19	0	1.0	-	# Fissure of 19 cm (just a label, no model)
+Z20	0	1.0	-	# Fissure of 20 cm (just a label, no model)
+Z21	0	1.0	-	# Fissure of 21 cm (just a label, no model)
+Z22	0	1.0	-	# Fissure of 22 cm (just a label, no model)
+Z23	0	1.0	-	# Fissure of 23 cm (just a label, no model)
+Z24	0	1.0	-	# Fissure of 24 cm (just a label, no model)
+Z25	0	1.0	-	# Fissure of 25 cm (just a label, no model)
+Z26	0	1.0	-	# Fissure of 26 cm (just a label, no model)
+Z27	0	1.0	-	# Fissure of 27 cm (just a label, no model)
+Z28	0	1.0	-	# Fissure of 28 cm (just a label, no model)
+Z29	0	1.0	-	# Fissure of 29 cm (just a label, no model)
+Z30	0	1.0	-	# Fissure of 30 cm (just a label, no model)
+Z31	0	1.0	-	# Fissure of 31 cm (just a label, no model)
+Z32	0	1.0	-	# Fissure of 32 cm (just a label, no model)
+Z33	0	1.0	-	# Fissure of 33 cm (just a label, no model)
+Z34	0	1.0	-	# Fissure of 34 cm (just a label, no model)
+Z35	0	1.0	-	# Fissure of 35 cm (just a label, no model)
+Z36	0	1.0	-	# Fissure of 36 cm (just a label, no model)
+Z37	0	1.0	-	# Fissure of 37 cm (just a label, no model)
+
+## EOF
+ 

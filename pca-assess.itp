@@ -1,0 +1,61 @@
+
+
+"\n//                   *** PCA ASSESSMENT MODE ***" -MSG;
+
+function -PCA_assess(itHMM,sSns,nSpl,nIte)
+{
+  sSns if ".$[sSns]" else "" endif sSns =;                                      # Normalize sensor ID
+  "\n// HMM PCA assessment"                                               -MSG; # Protocol
+  sSns if "\n   - Sensor ID     : $[sSns]" -MSG; endif                          # Protocol
+  "\n   - Model ID      : $[nSpl]_$[nIte]" -MSG;                                # Protocol
+
+  object iFI;                                                                   # Feature information object
+  file   iF;                                                                    # Feature file list
+  data   idF;                                                                   # File list
+  data   idMsf;                                                                 # Most sign. feature vector sequence
+  data   idRes;                                                                 # Evaluation result
+  var    sDirModel;                                                             # Model directory
+  var    sDirLog;                                                               # Log directory
+
+  "model" "" -CFG_get_path sDirModel =;                                         # Get model directory
+  "log"   "" -CFG_get_path sDirLog   =;                                         # Get log directory
+  "fea"   "" -CFG_get_path               iF -set path;                          # Set feature files directory
+  "test"  "" -CFG_get_flist              iF -set flist;                         # Set test file list
+  "$[sSns]." ( "fea.ext" "" -CFG_get ) + iF -set ext;                           # Set feature files extension
+  "${sDirModel}/feainfo$[sSns].object" iFI -FEA_info;                           # Get feature info object
+
+  ## Assessment                                                                 # -------------------------------------
+  :iF.flist_data[0]: idF =; 0 "FILE" idF -set_cname;                            # Get file names
+  "\n   Assessing $[iF.len] samples through PCA ..."                      -MSG; # Protocol
+  0 1 -PBAR;                                                                    # Begin progress bar
+  label L_FILE; iF -next                                                        # Loop over files
+  if                                                                            # >>
+    "\n     $[iF.nfile 1 +]/$[iF.len] - $[iF.sfile]: "                   -MSG2; #   Protocol
+    :(iF.nfile+1)/iF.len: 1 -PBAR;                                              #   Display progress
+    iF sSns "A" idMsf -FEA_get not if goto L_FILE endif;             "." -MSG2; #   Load feature file
+    idMsf iFI 1 idMsf NULL -FEA_sfa;                                            #   Call secondary feature analysis
+    idMsf 0 1 idMsf /rec -select;
+    " SFA0=${idMsf[0,0]}"                                                -MSG2; #   Protocol
+    :idMsf[1]: idMsf -join;
+    ( idMsf.dim 2 - ) "RES" idMsf -set_cname;                                   #   Name recognized label component
+    ( idMsf.dim  -- ) "REF" idMsf -set_cname;                                   #   Name reference label component
+    idMsf idRes -cat;
+    goto L_FILE;                                                                #   End of file loop
+  endif                                                                         # <<
+  "\n  "                                                                 -MSG2; # Protocol
+  " done\n"                                                               -MSG; # Protocol
+	idF idRes -join;                                                              # Join file names
+  "" idRes -set runit;                                                          # Set record axis name
+  "${sDirLog}/pca_assess.dn3" idRes /zip -save;                                 # Save
+  sDirLog "pca" "" itHMM.ud NULL idRes -XXM_assess_hist;                        # Make NLL x Class histogram(s)
+	
+	1. return;
+}
+
+## Defunct and overwrite functions
+/disarm -HMM_init    { }
+/disarm -HMM_update  { }
+/disarm -HMM_split   { }
+/disarm -PCA_assess /disarm -HMM_assess =;
+
+## EOF

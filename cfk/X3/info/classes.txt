@@ -1,0 +1,19 @@
+## UASR class definition file
+## - IZFP CFRP Plate Database
+## - Excitation signal X3 (Sinc Function @ 600 kHz)
+##
+##   first  column: model name
+##   second column: number of states
+##   third  column: voice/unvoiced information
+##   fourth column: abstract model for SMG reclassification
+
+Z00	3	1.0	-	# Plate intact
+#Z01	3	1.0	-	# Plate intact, remounted
+#Z02	3	1.0	-	# Plate intact, remounted again
+Z03	3	1.0	-	# Impact 1 (15 J)
+Z04	3	1.0	-	# Impact 2 (25 J)
+Z05	3	1.0	-	# Impact 3 (45 J)
+Z06	3	1.0	-	# Impact 4 (25 J, with pad)
+Z07	3	1.0	-	# Impact 5 (25 J, with pad)
+
+## EOF

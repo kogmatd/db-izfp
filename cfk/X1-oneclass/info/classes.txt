@@ -1,0 +1,17 @@
+## UASR class definition file
+## - IZFP CFRP Plate Database
+## - Excitation signal X1 (Ricker Wavelet @ 100 kHz)
+##
+##   first  column: model name
+##   second column: number of states
+##   third  column: voice/unvoiced information
+##   fourth column: abstract model for SMG reclassification
+
+Z00	3	1.0	-	# Plate intact
+Z03	0	1.0	-	# Impact 1 (15 J)               (just a label, no model)
+Z04	0	1.0	-	# Impact 2 (25 J)               (just a label, no model)
+Z05	0	1.0	-	# Impact 3 (45 J)               (just a label, no model)
+Z06	0	1.0	-	# Impact 4 (25 J, with pad)     (just a label, no model)
+Z07	0	1.0	-	# Impact 5 (25 J, with pad)     (just a label, no model)
+
+## EOF

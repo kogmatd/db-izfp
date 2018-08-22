@@ -1,0 +1,14 @@
+#! dlabpro
+
+"$UASR_HOME/scripts/dlabpro/util/@.itp" include;
+
+data idFls; "$1" "ascii" idFls stdfile /strings -import;
+data idRes; "$2" idRes -restore;
+data idIdx;
+var  sFn;   ( "$2" "?.dn3?" "replace" -VAR_strop ) ".flt.dn3" + sFn =;
+
+idRes idFls 2 0 idIdx /noerror -gen_index;
+:idIdx.<0: idRes -dmark;
+idRes 0 0 idRes /mark -delete;
+"\n$[sFn]\n" -echo;
+sFn idRes -save;

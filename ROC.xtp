@@ -1,0 +1,50 @@
+#! dlabpro
+
+"$UASR_HOME/scripts/dlabpro/util/@.itp" include;
+
+var  nSteps; 1000 nSteps =;
+
+data idAux;
+data idRes;
+data idCls;
+data idRef;
+data idTP;
+data idFP;
+data idTN;
+data idFN;
+var  sLab;
+var  nTrsh;
+var  nMin;
+var  nMax;
+var  nInc;
+
+"$1" idRes -restore; idRes ( "FILE" idRes -find_comp ) 1 idRes -delete;
+$$ 1 > if "$2" else "Z00" endif sLab =;
+
+:idRes[0]: NULL 0 "min" idAux /rec -aggregate; :idAux[0,0]: nMin =;
+:idRes[0]: NULL 0 "max" idAux /rec -aggregate; :idAux[0,0]: nMax =;
+:nInc = (nMax-nMin)/nSteps;
+"\n   MIN: $[nMin]" -echo;
+"\n   MAX: $[nMax]" -echo;
+"\n   INC: $[nInc]" -echo;
+"\n"                -echo;
+
+:idRes["REF"]: sLab "cmp" idRef -strop; :idRef.==0: idRef =;
+"\n   TRSH     \tTP\tFP\tFN\tTN\tFAR\tFRR" -echo;
+nMin nTrsh =; label L_ROC; nTrsh nMax <= if
+  :idRes[0].<=nTrsh: idCls =;
+  :(idRef.==1).&&(idCls.==1): idTP =; idTP NULL 0 "sum" idTP /rec -aggregate;
+  :(idRef.==0).&&(idCls.==1): idFP =; idFP NULL 0 "sum" idFP /rec -aggregate;
+  :(idRef.==1).&&(idCls.==0): idFN =; idFN NULL 0 "sum" idFN /rec -aggregate;
+  :(idRef.==0).&&(idCls.==0): idTN =; idTN NULL 0 "sum" idTN /rec -aggregate;
+  "\n   $[nTrsh]" -echo;
+     "\t${idTP[0,0]}\t${idFP[0,0]}\t${idFN[0,0]}\t${idTN[0,0]}" -echo;
+     "\t${ent(10000*idFP[0,0]/(idFP[0,0]+idTN[0,0]))/100}" -echo;
+     "\t${ent(10000*idFN[0,0]/(idTP[0,0]+idFN[0,0]))/100}" -echo;
+  :idFN[0,0]==0: if
+    "\n   No more false negatives, stop." -echo;
+  else
+    nInc nTrsh +=; goto L_ROC;
+  endif
+endif;
+"\n\n" -echo;

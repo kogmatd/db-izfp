@@ -1,0 +1,30 @@
+#! dlabpro
+
+"$UASR_HOME/scripts/dlabpro/util/@.itp" include;
+
+data idRes;
+"$1" idRes -restore;
+idRes ( "FILE" idRes -find_comp ) 1 idRes -delete;
+
+data idLtb;
+:idRes["REF"]: 0 idLtb -sortup;
+idLtb 0 idLtb -compress;
+idLtb 0 1 idLtb -select;
+#idLtb -print;
+
+statistics iS;
+4 1 idLtb.nrec idLtb 0 iS -setup;
+idRes ( "REF" idRes -find_comp ) NULL iS -update;
+iS -status;
+
+data idStat;
+data idAux;
+idAux iS -mean; 0 "MEAN" idAux -set_cname; idAux idStat -join;
+idAux iS -sdev; 0 "SDEV" idAux -set_cname; idAux idStat -join;
+idAux iS -min;  0 "MIN"  idAux -set_cname; idAux idStat -join;
+idAux iS -max;  0 "MAX"  idAux -set_cname; idAux idStat -join;
+
+"\n  CM = ${ent(10000*(idStat[1,2]-idStat[0,3])/(idStat[1,0]-idStat[0,0]))/100} %%" -echo;
+"\n" -echo;
+idStat -print;
+#"idStat.csv" "csv_de" idStat stdfile -export;
