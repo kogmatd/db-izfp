@@ -1,5 +1,8 @@
 ori
 sig
+sig_old
 fea
 log
 model
+.*.swp
+.*.swo
