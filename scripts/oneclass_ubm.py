@@ -51,21 +51,25 @@ def rle(x):
     values = x[starts]
     return [(starts[i],lengths[i], values[i]) for i in range(len(starts))]
 
-def feaana(fns):
-    ret={}
-    for fn in fns:
-        ret[fn]=fx={}
+def sigget(fns):
+    for f in fns:
+        sig=isig.load(os.path.join(dsig,f['fn']+sigext)).rmaxis()
+        sig.inc[0]=1/6250000
+        f['sig']=sig
 
-        fx['sig']=isig.load(os.path.join(dsig,fn+sigext)).rmaxis()
-        fx['sig'].inc[0]=1/6250000
-
-        fea=ifea.fft(fx['sig'],crate=icfg.get('pfa.crate'),wlen=icfg.get('pfa.wlen')).db()
+def pfaget(fns):
+    for f in fns:
+        if not 'sig' in f: raise ValueError("feaget without sig for: "+f['fn'])
+        fea=ifea.fft(f['sig'],crate=icfg.get('pfa.crate'),wlen=icfg.get('pfa.wlen')).db()
         ifea.cavg(fea,rat=4,inplace=True)
         fea.sel(axis=len(fea.shape)-1,len=icfg.get('pfa.dim'),inplace=True)
-        fx['pfa']=fea
+        f['pfa']=fea
 
-    return ret
-
+def sfaget(ftrn,ftst):
+    sfa=ifea.Sfa(ftrn,'pfa')
+    #sfa.save(os.path.join(dmod,'sfa_'+s))
+    for f in ftrn+ftst:
+        if not 'sfa' in f: f['sfa']=sfa.do(f['pfa'])
 
 def svmtrn(ftrn,ftst,fea,s):
     print('svm start  '+s)
@@ -98,10 +102,67 @@ def dnntest(s,fea='sfa',**kwargs):
     for f in ftst2:
         if f['lab']!='Z00': f['lab']='Zxx'
     cdnn=idnn.trn(ftrn,ftst2,fea=fea,dmod=dmod,**kwargs)
-    res=idnn.evl(cdnn,ftst,fea=fea)
-    lab=[f['lab'] for f in ftst]
+    res=idnn.evl(cdnn,ftst2,fea=fea)
+    lab=[f['lab'] for f in ftst2]
     c=len([True for l,r in zip(lab,res) if l==r])
     print(c,len(lab),c/len(lab))
+    return cdnn
+
+import random
+def dnnrnd():
+    xip=int((random.random()**2)*1000)+10
+    dp=(random.random()**5)*0.5
+    kwargs={}
+    kwargs['max_iter']=200
+    kwargs['s']=sen[int(random.random()*len(sen))]
+    kwargs['fea']=['sig','pfa','sfa'][int(random.random()*3)]
+    kwargs['weight_decay']=(random.random()**4)*0.4
+    kwargs['base_lr']=(random.random()**2)*0.1+0.02
+    lay=[('ip',xip),('dropout',dp),('relu',),('ip',)]
+    if True:
+        k=int(random.random()*5)+3
+        o=int(random.random()*15)+10
+        s=int(random.random()*3)+1
+        if kwargs['fea']=='sig':
+            k=[k,1]
+            s=[s,1]
+        lay=[('conv',k,o,s)]+lay
+    kwargs['lay']=lay
+    # c 16,7,2,0,1 # ip 498
+    #kwargs={'fea': 'pfa', 's': 'A1A2', 'max_iter': 200, 'weight_decay': 0.10661077392254943, 'lay': [('conv', 3, 18, 1), ('ip', 824), ('dropout', 0.00038962239039409444), ('relu',), ('ip',)], 'base_lr': 0.08700124692413123}
+    stat=[]
+    for i in range(3):
+        print(kwargs)
+        r=dnntest(**kwargs)
+        stat.append(np.array(r['stat']))
+    print('/dnnrnd_'+str(int(time.time())))
+    np.save(dlog+'/dnnrnd/dnnrnd_'+str(int(time.time()))+'_arg.npy',kwargs)
+    np.save(dlog+'/dnnrnd/dnnrnd_'+str(int(time.time()))+'_stat.npy',stat)
+
+def dnnrndloop():
+    while not os.path.exists('stop'): dnnrnd()
+
+def dnnrnd_allsen():
+    dn=os.path.join(dlog,'dnnrnd')
+    for fn in os.listdir(dn):
+        if os.path.exists('stop'): break
+        if fn[-8:]!='_arg.npy': continue
+        fna=os.path.join(dn,fn)
+        fns=fna[:-8]+'_stat.npy'
+        fnx=fna[:-8]+'_stat_allsen.npy'
+        if not os.path.exists(fns): continue
+        if os.path.exists(fnx): continue
+        stat=np.load(fns)
+        best=np.max(np.min(np.array(stat)[:,:,2],axis=0))
+        if best<0.8: continue
+        kwargs=eval(str(np.load(fna)))
+        statx=[]
+        for s in sen:
+            kwargs['s']=s
+            print(kwargs)
+            r=dnntest(**kwargs)
+            statx.append(np.array(r['stat']))
+        np.save(fnx,statx)
 
 if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
 
@@ -117,9 +178,10 @@ dlog=icfg.getdir('log')
 dsig=icfg.getdir('sig')
 sigext='.'+icfg.get('sig.ext','wav')
 sen=getsensors()
+senuse=sen#[:1]
 
 ftrns={}
-for strn in sen:
+for strn in senuse:
     ftrns[strn]=[]
     for f in ftrn:
         for s in sen:
@@ -129,7 +191,7 @@ for strn in sen:
             ftrns[strn].append(fn)
     ftrns[strn]=icls.equalcls(ftrns[strn])
 ftsts={}
-for s in sen:
+for s in senuse:
     ftsts[s]=[]
     for f in ftst:
         fn={**f}
@@ -137,25 +199,28 @@ for s in sen:
         ftsts[s].append(fn)
 
 if not 'fdb' in locals(): fdb={}
+for flst in [*ftsts.values(),*ftrns.values()]:
+    for f in flst:
+        if not f['fn'] in fdb: fdb[f['fn']]={'fn':f['fn']}
 
-print("fea")
-feado=[f['fn'] for flst in [*ftsts.values(),*ftrns.values()] for f in flst if not f['fn'] in fdb]
-feado=list({*feado})
+thr=ijob.Thr(16)
+for typ in ['sig','pfa']:
+    print(typ)
+    do=[f for f in fdb.values() if not typ in f]
+    fnc=eval(typ+'get')
 
-t=time.time()
-for i in range(len(feado)):
-    if time.time()-t>5:
-        print("fea %i/%i"%(i,len(feado)))
-        t=time.time()
-    fn=feado[i]
-    fdb[fn]=feaana([fn])[fn]
+#    t=time.time()
+#    for i in range(len(do)):
+#        if time.time()-t>5:
+#            print("%s %i/%i"%(typ,i,len(do)))
+#            t=time.time()
+#        fnc([do[i]])
 
-#for i in range(0,len(feado),1000):
-#    print('fea start  %i/%i'%(i,len(feado)))
-#    ijob.thr_start('fea_%i'%(i),feaana,(feado[i:i+1000],))
-#for i in range(0,len(feado),1000):
-#    for fn,val in ijob.thr_res('fea_%i'%(i)).items(): fdb[fn]=val
-#    print('fea finish %i/%i'%(i,len(feado)))
+    for i in range(0,len(do),1000):
+        print('%s start  %i/%i'%(typ,i,len(do)))
+        thr.start('%s_%i'%(typ,i),fnc,(do[i:min(i+1000,len(do))],))
+    for i in range(0,len(do),1000): thr.res('%s_%i'%(typ,i))
+
 
 print("fealnk")
 for flst in [*ftsts.values(),*ftrns.values()]:
@@ -164,29 +229,29 @@ for flst in [*ftsts.values(),*ftrns.values()]:
         for fea,val in fdb[f['fn']].items(): f[fea]=val
 
 
+print('sfa')
+do=[s for s in senuse if len([True for f in ftrns[s]+ftsts[s] if not 'sfa' in f])!=0]
+for s in do:
+    print('sfa start  '+s)
+    thr.start('sfa_'+s,sfaget,(ftrns[s],ftsts[s]))
+for s in do: thr.res('sfa_'+s)
+
 if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
-
-for s in sen:
-    if len([True for f in ftrns[s]+ftsts[s] if not 'sfa' in f])==0: continue
-    print('sfa '+s)
-    sfa=ifea.Sfa(ftrns[s],'pfa')
-    #sfa.save(os.path.join(dmod,'sfa_'+s))
-    for f in ftrns[s]+ftsts[s]:
-        if not 'sfa' in f: f['sfa']=sfa.do(f['pfa'])
-
-#fea='pfa'
-#for s in sen: ijob.job_start('svmtrn_'+s,svmtrn,(ftrns[s],ftsts[s],fea,s))
-#prob=[ijob.job_res('svmtrn_'+s) for s in sen]
-#np.save(os.path.join(dlog,'prob_svm_'+fea+'.npy'),prob)
+dnnrndloop()
+raise SystemExit()
 
 fea='pfa'
 cls='dnn'
-ijob.job_start.maxrun=1
+job=ijob.Job(16 if cls!='dnn' else 1)
 fnctrn=eval(cls+'trn')
-for s in sen: ijob.job_start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s))
-prob=[ijob.job_res(cls+'trn_'+s) for s in sen]
+for s in sen: job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s))
+prob=[job.res(cls+'trn_'+s) for s in sen]
 np.save(os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy'),prob)
 
+#x=dnntest('A1A2','sig',max_iter=200,lay=[('conv',[7,1],20,[5,1]),('ip',200),('dropout',0.5),('relu',),('ip',)])
+#x=dnntest('A1A2','pfa',max_iter=200,lay=[('ip',20),('relu',),('ip',)],weight_decay=0.1)
+#x=dnntest('A1A2','pfa',max_iter=200,lay=[('ip',200),('dropout',0.5),('relu',),('ip',)])
+#x=dnntest('A1A2','pfa',max_iter=200,lay=[('conv',7,20,5),('ip',200),('dropout',0.5),('relu',),('ip',)],weight_decay=0.01)
 
 # %bg _ip.magic('run -i foo.py')
 
