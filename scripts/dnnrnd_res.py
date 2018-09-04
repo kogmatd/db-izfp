@@ -9,8 +9,10 @@ sys.path.append(os.path.join(os.environ['HOME'],'audiomix/anawav'))
 
 import ipl
 import icfg
+import idnn
 importlib.reload(ipl)
 importlib.reload(icfg)
+importlib.reload(idnn)
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG {PAR}")
 icfg.Cfg(sys.argv[1])
@@ -27,6 +29,7 @@ for fn in os.listdir(dn):
     res.append({'fna':fna,'fns':fns})
     fnx=fna[:-8]+'_stat_allsen.npy'
     if os.path.exists(fnx): res[-1]['fnx']=fnx
+    res[-1]['fnp']=fna[:-8]+'_par.npy'
 
 def arg2par(arg):
     par={}
@@ -43,24 +46,75 @@ def arg2par(arg):
     par['dropout']=lay[par['conv']+1][1]
     return par
 
+def lay2xpar(fea,lay):
+    if fea=='sig': idim=(1,2500)
+    elif fea=='pfa': idim=(24,47)
+    elif fea=='sfa': idim=(16,47)
+    odim=2
+    fnet=os.path.join(dlog,'auxnet.prototxt')
+    lay=[*lay[:-1],(lay[-1][0],odim,*lay[-1][1:])]
+    idnn._netgen(fdb=None,fnet=fnet,lay=lay,batch_size=1,idim=idim)
+    return idnn._netstat({'netspec':fnet},idim,prt=False)
+
 for r in res:
     r['arg']=eval(str(np.load(r['fna'])))
     r['stat']=np.load(r['fns'])
     r['best']=np.max(np.min(np.array(r['stat'])[:,:,2],axis=0))
     r['par']=arg2par(r['arg'])
+    if os.path.exists(r['fnp']): r['par']['xpar']=int(np.load(r['fnp']))
+    else:
+        r['par']['xpar']=lay2xpar(r['arg']['fea'],r['arg']['lay'])
+        np.save(r['fnp'],r['par']['xpar'])
     if 'fnx' in r:
         r['stat_allsen']=np.load(r['fnx'])
-        r['best_allsen']=np.max(np.min(np.array(r['stat'])[:,:,2],axis=0))
+        r['best_allsen']=np.max(np.min(np.array(r['stat_allsen'])[:,:,2],axis=0))
+
+x=np.array([r['stat'] for r in res]).take(2,axis=-1).reshape(-1,200)
+x=x[np.max(x,axis=1)<1]
+x=x[np.sum(x>0.8,axis=1)>0]
+x=x.take(range(0,200,10),axis=-1)
+#ipl.cm(np.maximum(x,0.76))
+
+raise SystemExit()
 
 print('min-best>0.8: %.2f'%(np.min([r['best'] for r in res if r['best']>0.8])))
 
-for key in ['s','fea']:
+for key in ['fea']: #['s','fea']:
     for v in sorted({r['arg'][key] for r in res}):
         x=[r['best'] for r in res if r['arg'][key]==v]
         c=np.sum(np.array(x)>0.8)
         ax=[r['best_allsen'] for r in res if r['arg'][key]==v and 'best_allsen' in r]
         ac=np.sum(np.array(ax)>0.8)
         print('%s: %4i/%-4i - %.2f%s'%(v,c,len(x),c/len(x),' [allsen:%i/%i]'%(ac,len(ax)) if key=='fea' else ''))
+
+def cor(v):
+    a=np.array(v)[:,0]
+    b=np.array(v)[:,1]
+    a=a-np.mean(a)
+    b=b-np.mean(b)
+    if np.max(np.abs(a))==0: return 0
+    if np.max(np.abs(b))==0: return 0
+    return np.sum(a*b)/np.sqrt(np.sum(a*a)*np.sum(b*b))
+
+par=list(res[0]['par'].keys())
+par.remove('xpar')
+par.remove('conv')
+for fea in['sig','pfa','sfa']:
+    for ip1 in range(len(par)):
+        for ip2 in range(ip1+1,len(par)):
+            p1=par[ip1]
+            p2=par[ip2]
+            v=[[r['par'][p1],r['par'][p2]] for r in res if r['arg']['fea']==fea and r['best']>0.8]
+            c=cor(v)
+            if c<0.3: continue
+            print("cor %s: %s %s => %.2f"%(fea,p1,p2,c))
+
+#for fea in['sig','pfa','sfa']:
+#    x=[r for r in res if 'best_allsen' in r and r['best_allsen']>0.8 and r['arg']['fea']==fea]
+#    x=x[np.argmin([r['par']['xpar'] for r in x])]
+#    print('##### best&smallest model for '+fea+' #####')
+#    print(x['par'])
+#    print(x['arg'])
 
 for fea in['sig','pfa','sfa']:
     for p in sys.argv[2:]:
@@ -74,8 +128,10 @@ for fea in['sig','pfa','sfa']:
         if p=='conv_s': bins=bins*3+1
         if p=='ip': bins=(bins**2)*1000+10
         if p=='dropout': bins=(bins**5)*0.5
+        if p=='xpar': bins*=np.max([r['par']['xpar'] for r in res])
         ha=np.histogram(a,bins)
         hb=np.histogram(b,bins)
         hx=np.mean([ha[1][1:],ha[1][:-1]],axis=0)
         #ipl.p2([hx,[ha[0],hb[0]]],title=fea+' '+p)
         ipl.p2([hx,ha[0]/(ha[0]+hb[0]+(ha[0]+hb[0]==0))*(ha[0]+hb[0]!=0)],title=fea+' '+p)
+
