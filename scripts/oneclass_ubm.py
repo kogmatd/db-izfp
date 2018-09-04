@@ -54,7 +54,7 @@ def rle(x):
 def sigget(fns):
     for f in fns:
         sig=isig.load(os.path.join(dsig,f['fn']+sigext)).rmaxis()
-        sig.inc[0]=1/6250000
+        sig.inc[0]=1/icfg.get('sig.srate')
         f['sig']=sig
 
 def pfaget(fns):
@@ -172,6 +172,7 @@ icfg.Cfg(sys.argv[1])
 print("flst")
 ftrn=icfg.readflst('train')
 ftst=icfg.readflst('test')
+#fdev=[] if icfg.get('flist.dev') is None else icfg.readflst('dev')
 
 dmod=icfg.getdir('model')
 dlog=icfg.getdir('log')
@@ -198,7 +199,11 @@ for s in senuse:
         fn['fn']+='.'+s
         ftsts[s].append(fn)
 
-if not 'fdb' in locals(): fdb={}
+fdb_fn=os.path.join(dlog,'fdb.npy')
+if not 'fdb' in locals():
+    fdb={}
+    if os.path.exists(fdb_fn): fdb=np.load(fdb_fn)[0]
+
 for flst in [*ftsts.values(),*ftrns.values()]:
     for f in flst:
         if not f['fn'] in fdb: fdb[f['fn']]={'fn':f['fn']}
@@ -221,6 +226,7 @@ for typ in ['sig','pfa']:
         thr.start('%s_%i'%(typ,i),fnc,(do[i:min(i+1000,len(do))],))
     for i in range(0,len(do),1000): thr.res('%s_%i'%(typ,i))
 
+if senuse==sen: np.save(fdb_fn,np.array([fdb]))
 
 print("fealnk")
 for flst in [*ftsts.values(),*ftrns.values()]:
@@ -237,11 +243,11 @@ for s in do:
 for s in do: thr.res('sfa_'+s)
 
 if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
-dnnrndloop()
-raise SystemExit()
+#dnnrndloop()
+#raise SystemExit()
 
 fea='pfa'
-cls='dnn'
+cls='svm'
 job=ijob.Job(16 if cls!='dnn' else 1)
 fnctrn=eval(cls+'trn')
 for s in sen: job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s))
