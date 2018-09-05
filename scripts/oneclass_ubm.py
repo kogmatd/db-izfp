@@ -19,6 +19,7 @@ import idnn
 import icls
 import idat
 import ijob
+import ifdb
 importlib.reload(ipl)
 importlib.reload(isig)
 importlib.reload(ifea)
@@ -29,6 +30,7 @@ importlib.reload(idnn)
 importlib.reload(icls)
 importlib.reload(idat)
 importlib.reload(ijob)
+importlib.reload(ifdb)
 
 def getsensors():
     fn=icfg.getfile('am.sensors','info','sensors.txt')
@@ -79,12 +81,16 @@ def svmtrn(ftrn,ftst,fea,s):
     return prob
 
 def hmmtrn(ftrn,ftst,fea,s):
+    def _softmax(x,f,f2):
+        x/=np.array(f).reshape((-1,1))*f2
+        x=np.exp(x-x.max())
+        x/=x.sum(1).reshape((-1,1))
+        return x
     print('hmm start  '+s)
-    ftrn0=[f for f in ftrn if f['lab']=='Z00']
-    chmm=ihmm.trn(flst=ftrn0,fea=fea,its=[0])
-    prob=ihmm.evlp(chmm,flst=ftst,fea=fea)[:,0]
-    prob/=[f[fea].shape[0] for f in ftst]
-    prob*=-1
+    chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0])
+    prob=ihmm.evlp(chmm,flst=ftst,fea=fea)
+    prob=_softmax(prob,[f[fea].shape[0] for f in ftst],-40)
+    prob=prob.take(0,-1)
     print('hmm finish '+s)
     return prob
 
@@ -199,19 +205,19 @@ for s in senuse:
         fn['fn']+='.'+s
         ftsts[s].append(fn)
 
-fdb_fn=os.path.join(dlog,'fdb.npy')
-if not 'fdb' in locals():
-    fdb={}
-    if os.path.exists(fdb_fn): fdb=np.load(fdb_fn)[0]
+if not 'fdb' in locals(): fdb=ifdb.load()
 
 for flst in [*ftsts.values(),*ftrns.values()]:
     for f in flst:
         if not f['fn'] in fdb: fdb[f['fn']]={'fn':f['fn']}
 
 thr=ijob.Thr(16)
+fdb_chg=False
 for typ in ['sig','pfa']:
     print(typ)
     do=[f for f in fdb.values() if not typ in f]
+    if len(do)==0: continue
+    fdb_chg=True
     fnc=eval(typ+'get')
 
 #    t=time.time()
@@ -226,7 +232,7 @@ for typ in ['sig','pfa']:
         thr.start('%s_%i'%(typ,i),fnc,(do[i:min(i+1000,len(do))],))
     for i in range(0,len(do),1000): thr.res('%s_%i'%(typ,i))
 
-if senuse==sen: np.save(fdb_fn,np.array([fdb]))
+if senuse==sen and fdb_chg: ifdb.save(fdb)
 
 print("fealnk")
 for flst in [*ftsts.values(),*ftrns.values()]:
@@ -246,7 +252,7 @@ if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
 #dnnrndloop()
 #raise SystemExit()
 
-fea='pfa'
+fea='sig'
 cls='svm'
 job=ijob.Job(16 if cls!='dnn' else 1)
 fnctrn=eval(cls+'trn')
