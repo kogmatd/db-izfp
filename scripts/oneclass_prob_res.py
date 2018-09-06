@@ -10,8 +10,10 @@ sys.path.append(os.path.join(os.environ['HOME'],'audiomix/anawav'))
 
 import ipl
 import icfg
+import icls
 importlib.reload(ipl)
 importlib.reload(icfg)
+importlib.reload(icls)
 
 def rle(x):
     where = np.flatnonzero
@@ -46,15 +48,16 @@ def plot_roc(ftst,nld):
     dpl=sorted([[r['facc'],r['frej']] for r in dres],key=lambda a: a[0]*100+(1-a[1]))
     #ipl.p2(dpl,xlabel='Fehlakzeptanz',ylabel='Fehlrückweisung')
 
-    # find eer
-    i=np.sum([r[0]<r[1] for r in dpl])
-    (ax,ay)=dpl[i-1]
-    (bx,by)=dpl[i]
-    eer=(by*ax-ay*bx)/(by+ax-ay-bx)
-    print('EER: %.2f%%'%(eer*100))
-    if eer==0:
-        cm=(np.min(detect[0])-np.max(detect[1]))/(np.mean(detect[0])-np.mean(detect[1]))
-        print('CM: %.2f%%'%(cm*100))
+def hmmprob(nld):
+    px=nld.take(0,-1)
+    pxs=sorted(px.flat)
+    l=pxs[int(len(pxs)*0.05)]
+    h=pxs[int(len(pxs)*0.95)]
+    v=np.exp(-(px-l)/(h-l))
+    v1=np.exp(-1)
+    return (v-v1)/(1-v1)*0.8+0.1
+    
+
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG prob_*.npy")
 icfg.Cfg(sys.argv[1])
@@ -76,15 +79,22 @@ while i<len(fns):
     else: i+=1
 
 for fn in sorted(fns):
-    print('##### %s #####'%(os.path.basename(fn)))
     prob=np.load(fn)
+    msg=''
+    if fn.find('_hmm_')>=0 and prob.shape[-1]==3:
+        if np.sum(prob.take(2,-1)!=prob.take(2,-1)[0])==0: msg=' ERR in hmm[1]'
+        prob=hmmprob(prob.take([1,2],-1))
+        #prob=prob.take(0,-1)
+
+    eer,cm=icls.eer(prob,flst=ftst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
+    print('%-20s EER: %6.2f%% CM: %6.2f%%%s'%(os.path.basename(fn),eer*100,cm*100,msg))
 
     if len(fns)==1:
         probm=np.mean(prob,axis=0)
         res=[(int(l[2][1:]),probm[l[0]:l[0]+l[1]]) for l in lab]
         resmean=[(l,np.mean(r),np.std(r)) for (l,r) in res]
-        ipl.p2(resmean,err='y',xrange=(-1,40))
+        ipl.p2(resmean,err='y',xrange=(-1,resmean[-1][0]+1))
         #ipl.cm(prob)
 
-    plot_roc(ftst,prob)
+    #plot_roc(ftst,prob)
 
