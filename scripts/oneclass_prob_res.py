@@ -2,6 +2,7 @@
 
 import os
 import sys
+import re
 import importlib
 import numpy as np
 
@@ -24,9 +25,11 @@ def rle(x):
     return [(starts[i],lengths[i], values[i]) for i in range(len(starts))]
 
 def plot_roc(ftst,nld):
+    okpat='Z00'
+    if icfg.get('db')=='izfp/cfk': okpat='Z0[0-2]'
     detect=(
-       nld[:,np.array([f['lab']=='Z00' for f in ftst])].mean(axis=0),
-       nld[:,np.array([f['lab']!='Z00' for f in ftst])].mean(axis=0),
+       nld[:,np.array([not re.match(okpat,f['lab']) is None for f in ftst])].mean(axis=0),
+       nld[:,np.array([    re.match(okpat,f['lab']) is None for f in ftst])].mean(axis=0),
     )
     dres=[]
     for v in sorted([*detect[0],*detect[1]]):
@@ -60,13 +63,28 @@ ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
 
 lab=rle([f['lab'] for f in ftst])
-prob=np.load(sys.argv[2])
 
-probm=np.mean(prob,axis=0)
-res=[(int(l[2][1:]),probm[l[0]:l[0]+l[1]]) for l in lab]
-resmean=[(l,np.mean(r),np.std(r)) for (l,r) in res]
-ipl.p2(resmean,err='y',xrange=(-1,40))
-#ipl.cm(prob)
+fns=sys.argv[2:]
+if len(fns)==0: fns=[dlog]
+i=0
+while i<len(fns):
+    if not os.path.exists(fns[i]): fns[i]=os.path.join(dlog,fns[i])
+    if os.path.isdir(fns[i]):
+        ins=[os.path.join(fns[i],f) for f in os.listdir(fns[i]) if f[:5]=='prob_' and f[-4:]=='.npy']
+        fns=fns[:i]+ins+fns[i+1:]
+        i+=len(ins)
+    else: i+=1
 
-plot_roc(ftst,prob)
+for fn in sorted(fns):
+    print('##### %s #####'%(os.path.basename(fn)))
+    prob=np.load(fn)
+
+    if len(fns)==1:
+        probm=np.mean(prob,axis=0)
+        res=[(int(l[2][1:]),probm[l[0]:l[0]+l[1]]) for l in lab]
+        resmean=[(l,np.mean(r),np.std(r)) for (l,r) in res]
+        ipl.p2(resmean,err='y',xrange=(-1,40))
+        #ipl.cm(prob)
+
+    plot_roc(ftst,prob)
 
