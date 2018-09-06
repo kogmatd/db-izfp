@@ -73,9 +73,9 @@ def sfaget(ftrn,ftst):
     for f in ftrn+ftst:
         if not 'sfa' in f: f['sfa']=sfa.do(f['pfa'])
 
-def svmtrn(ftrn,ftst,fea,s):
+def svmtrn(ftrn,ftst,fea,s,**kwargs):
     print('svm start  '+s)
-    csvm=isvm.trn(ftrn,fea)
+    csvm=isvm.trn(ftrn,fea,**kwargs)
     prob=isvm.evlp(csvm,ftst,fea)[:,0]
     print('svm finish '+s)
     return prob
@@ -88,11 +88,12 @@ def hmmtrn(ftrn,ftst,fea,s):
         return x
     print('hmm start  '+s)
     chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0])
-    prob=ihmm.evlp(chmm,flst=ftst,fea=fea)
-    prob=_softmax(prob,[f[fea].shape[0] for f in ftst],-40)
+    nld=ihmm.evlp(chmm,flst=ftst,fea=fea)
+    prob=_softmax(nld,[f[fea].shape[0] for f in ftst],-40)
     prob=prob.take(0,-1)
     print('hmm finish '+s)
-    return prob
+    return np.concatenate((prob.reshape(-1,1),nld),axis=1)
+    #return prob
 
 def dnntrn(ftrn,ftst,fea,s,**kwargs):
     print('dnn start  '+s)
@@ -195,6 +196,7 @@ for strn in senuse:
             fn={**f}
             fn['fn']+='.'+s
             if strn!=s: fn['lab']='Zxx'
+            else: fn['lab']='Z00'
             ftrns[strn].append(fn)
     ftrns[strn]=icls.equalcls(ftrns[strn])
 ftsts={}
@@ -228,6 +230,7 @@ for typ in ['sig','pfa']:
 #        fnc([do[i]])
 
     for i in range(0,len(do),1000):
+        if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
         print('%s start  %i/%i'%(typ,i,len(do)))
         thr.start('%s_%i'%(typ,i),fnc,(do[i:min(i+1000,len(do))],))
     for i in range(0,len(do),1000): thr.res('%s_%i'%(typ,i))
@@ -244,6 +247,7 @@ for flst in [*ftsts.values(),*ftrns.values()]:
 print('sfa')
 do=[s for s in senuse if len([True for f in ftrns[s]+ftsts[s] if not 'sfa' in f])!=0]
 for s in do:
+    if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
     print('sfa start  '+s)
     thr.start('sfa_'+s,sfaget,(ftrns[s],ftsts[s]))
 for s in do: thr.res('sfa_'+s)
@@ -252,13 +256,19 @@ if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
 #dnnrndloop()
 #raise SystemExit()
 
-fea='sig'
-cls='svm'
-job=ijob.Job(16 if cls!='dnn' else 1)
-fnctrn=eval(cls+'trn')
-for s in sen: job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s))
-prob=[job.res(cls+'trn_'+s) for s in sen]
-np.save(os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy'),prob)
+for cls in ['svm','hmm']:
+    feas=['pfa','sfa']
+    if cls!='hmm': feas.append('sig')
+    for fea in feas:
+        probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
+        if os.path.exists(probfn): continue
+        job=ijob.Job(22 if cls!='dnn' else 1)
+        fnctrn=eval(cls+'trn')
+        for s in sen:
+            if os.path.exists('stop'): job.cleanup(); raise SystemExit()
+            job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s))
+        prob=[job.res(cls+'trn_'+s) for s in sen]
+        np.save(probfn,prob)
 
 #x=dnntest('A1A2','sig',max_iter=200,lay=[('conv',[7,1],20,[5,1]),('ip',200),('dropout',0.5),('relu',),('ip',)])
 #x=dnntest('A1A2','pfa',max_iter=200,lay=[('ip',20),('relu',),('ip',)],weight_decay=0.1)
@@ -269,11 +279,3 @@ np.save(os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy'),prob)
 
 raise SystemExit()
 
-#dnn_arg={
-#    'ffa': {'lay': [('conv',11,16,(6,4)),('pool',3,2),('ip',100),('relu',),('ip',)], 'max_iter': 500},
-#    'ffd': {'lay': [('conv',11,16,(6,4)),('pool',3,2),('ip',100),('relu',),('ip',)], 'max_iter': 500},
-#    'fft': {'base_lr': 0.1},
-#    'pfa': {'lay': [('conv',11,16,(1,4)),('pool',3,2),('ip',100),('relu',),('ip',)], 'max_iter': 500},
-#    'sfa': {'lay': [('conv',7,20),('pool',2,2),('ip',400),('relu',),('ip',)]},
-#}
-#        cdnn=idnn.trn(ftrn,ftst,fea,**dnn_arg[fea])
