@@ -73,25 +73,23 @@ def sfaget(ftrn,ftst):
     for f in ftrn+ftst:
         if not 'sfa' in f: f['sfa']=sfa.do(f['pfa'])
 
+def prtres(prob,flst):
+    eer,cm=icls.eer(prob,flst=flst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
+    return 'EER: %6.2f%% CM: %6.2f%%'%(eer*100,cm*100)
+
 def svmtrn(ftrn,ftst,fea,s,**kwargs):
     print('svm start  '+s)
     csvm=isvm.trn(ftrn,fea,**kwargs)
     prob=isvm.evlp(csvm,ftst,fea)[:,0]
-    print('svm finish '+s)
+    print('svm finish '+s+' '+prtres(prob,ftst))
     return prob
 
 def hmmtrn(ftrn,ftst,fea,s):
-    def _softmax(x,f,f2):
-        x/=np.array(f).reshape((-1,1))*f2
-        x=np.exp(x-x.max())
-        x/=x.sum(1).reshape((-1,1))
-        return x
     print('hmm start  '+s)
-    chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0])
+    chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3)
     nld=ihmm.evlp(chmm,flst=ftst,fea=fea)
-    prob=_softmax(nld,[f[fea].shape[0] for f in ftst],-40)
-    prob=prob.take(0,-1)
-    print('hmm finish '+s)
+    prob=-nld.take(0,-1)/np.array([f[fea].shape[0] for f in ftst])
+    print('hmm finish '+s+' '+prtres(prob,ftst))
     return np.concatenate((prob.reshape(-1,1),nld),axis=1)
     #return prob
 
@@ -99,7 +97,7 @@ def dnntrn(ftrn,ftst,fea,s,**kwargs):
     print('dnn start  '+s)
     cdnn=idnn.trn(ftrn,ftst,fea=fea,dmod=dmod,**kwargs)
     prob=idnn.evlp(cdnn,ftst,fea=fea)[:,0]
-    print('dnn finish '+s)
+    print('dnn finish '+s+' '+prtres(prob,ftst))
     return prob
 
 def dnntest(s,fea='sfa',**kwargs):
@@ -171,10 +169,10 @@ def dnnrnd_allsen():
             statx.append(np.array(r['stat']))
         np.save(fnx,statx)
 
-if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
-
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
 icfg.Cfg(sys.argv[1])
+
+if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
 
 print("flst")
 ftrn=icfg.readflst('train')
@@ -188,26 +186,27 @@ sigext='.'+icfg.get('sig.ext','wav')
 sen=getsensors()
 senuse=sen#[:1]
 
-ftrns={}
-for strn in senuse:
-    ftrns[strn]=[]
-    for f in ftrn:
-        for s in sen:
+if True:
+    ftrns={}
+    for strn in senuse:
+        ftrns[strn]=[]
+        for f in ftrn:
+            for s in sen:
+                fn={**f}
+                fn['fn']+='.'+s
+                if strn!=s: fn['lab']='Zxx'
+                else: fn['lab']='Z00'
+                ftrns[strn].append(fn)
+        ftrns[strn]=icls.equalcls(ftrns[strn])
+    ftsts={}
+    for s in senuse:
+        ftsts[s]=[]
+        for f in ftst:
             fn={**f}
             fn['fn']+='.'+s
-            if strn!=s: fn['lab']='Zxx'
-            else: fn['lab']='Z00'
-            ftrns[strn].append(fn)
-    ftrns[strn]=icls.equalcls(ftrns[strn])
-ftsts={}
-for s in senuse:
-    ftsts[s]=[]
-    for f in ftst:
-        fn={**f}
-        fn['fn']+='.'+s
-        ftsts[s].append(fn)
+            ftsts[s].append(fn)
 
-if not 'fdb' in locals(): fdb=ifdb.load()
+if not 'fdb' in locals(): fdb = ifdb.load() if senuse==sen else {}
 
 for flst in [*ftsts.values(),*ftrns.values()]:
     for f in flst:
@@ -257,9 +256,9 @@ if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
 #raise SystemExit()
 
 for cls in ['svm','hmm']:
-    feas=['pfa','sfa']
-    if cls!='hmm': feas.append('sig')
+    feas=['pfa','sfa','sig']
     for fea in feas:
+        if cls=='hmm' and ftrns[sen[0]][0][fea].shape[-1]>40: continue
         probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
         if os.path.exists(probfn): continue
         job=ijob.Job(22 if cls!='dnn' else 1)
