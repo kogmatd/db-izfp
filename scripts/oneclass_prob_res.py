@@ -11,20 +11,12 @@ sys.path.append(os.path.join(os.environ['HOME'],'audiomix/anawav'))
 import ipl
 import icfg
 import icls
+import ihelp
+from ihelp import *
 importlib.reload(ipl)
 importlib.reload(icfg)
 importlib.reload(icls)
-
-def rle(x):
-    where = np.flatnonzero
-    x = np.asarray(x)
-    n = len(x)
-    if n == 0:
-        return np.array([], dtype=int)
-    starts = np.r_[0, np.where(x[1:]!=x[:-1])[0] + 1]                                                                                                                                                                                                    
-    lengths = np.diff(np.r_[starts, n])
-    values = x[starts]
-    return [(starts[i],lengths[i], values[i]) for i in range(len(starts))]
+importlib.reload(ihelp)
 
 def plot_roc(ftst,nld):
     okpat='Z00'
@@ -65,18 +57,9 @@ icfg.Cfg(sys.argv[1])
 ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
 
-lab=rle([f['lab'] for f in ftst])
+lab=ihelp.rle([f['lab'] for f in ftst])
 
-fns=sys.argv[2:]
-if len(fns)==0: fns=[dlog]
-i=0
-while i<len(fns):
-    if not os.path.exists(fns[i]): fns[i]=os.path.join(dlog,fns[i])
-    if os.path.isdir(fns[i]):
-        ins=[os.path.join(fns[i],f) for f in os.listdir(fns[i]) if f[:5]=='prob_' and f[-4:]=='.npy']
-        fns=fns[:i]+ins+fns[i+1:]
-        i+=len(ins)
-    else: i+=1
+fns=argv2resfns('prob_',sys.argv[2:])
 
 for fn in sorted(fns):
     prob=np.load(fn)
@@ -86,7 +69,15 @@ for fn in sorted(fns):
         prob=hmmprob(prob.take([1,2],-1))
         #prob=prob.take(0,-1)
 
-    eer,cm=icls.eer(prob,flst=ftst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
+    okpat=okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
+    #okpat='Z0[01]'
+    eer,cm=icls.eer(prob,flst=ftst,okpat=okpat)
+    
+    #ref=[not re.match(okpat,f['lab']) is None for f in ftst]
+    #msg+=' [%.2f<=>%.2f]'%(np.mean(prob.mean(axis=0)[ref]),np.mean(prob.mean(axis=0)[np.array(ref)==False]))
+    if np.max(prob.mean(0))<0.4: msg+=' ERR low max %.2f'%(np.max(prob.mean(0)))
+    if np.min(prob.mean(0))>0.6: msg+=' ERR high min %.2f'%(np.min(prob.mean(0)))
+
     print('%-20s EER: %6.2f%% CM: %6.2f%%%s'%(os.path.basename(fn),eer*100,cm*100,msg))
 
     if len(fns)==1:

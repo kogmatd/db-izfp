@@ -20,6 +20,8 @@ import icls
 import idat
 import ijob
 import ifdb
+import ihelp
+from ihelp import *
 importlib.reload(ipl)
 importlib.reload(isig)
 importlib.reload(ifea)
@@ -31,60 +33,20 @@ importlib.reload(icls)
 importlib.reload(idat)
 importlib.reload(ijob)
 importlib.reload(ifdb)
-
-def getsensors():
-    fn=icfg.getfile('am.sensors','info','sensors.txt')
-    if fn is None: return None
-    fd=open(fn,'r')
-    sen=[]
-    for line in fd.readlines():
-        line=re.sub('#.*|\n|\r|^[ \t]+|[ \t]+$','',line)
-        if len(line)>0: sen.append(line)
-    return sen
-
-def rle(x):
-    where = np.flatnonzero
-    x = np.asarray(x)
-    n = len(x)
-    if n == 0:
-        return np.array([], dtype=int)
-    starts = np.r_[0, np.where(x[1:]!=x[:-1])[0] + 1]                                                                                                                                                                                                    
-    lengths = np.diff(np.r_[starts, n])
-    values = x[starts]
-    return [(starts[i],lengths[i], values[i]) for i in range(len(starts))]
-
-def sigget(fns):
-    for f in fns:
-        sig=isig.load(os.path.join(dsig,f['fn']+sigext)).rmaxis()
-        sig.inc[0]=1/icfg.get('sig.srate')
-        f['sig']=sig
-
-def pfaget(fns):
-    for f in fns:
-        if not 'sig' in f: raise ValueError("feaget without sig for: "+f['fn'])
-        fea=ifea.fft(f['sig'],crate=icfg.get('pfa.crate'),wlen=icfg.get('pfa.wlen')).db()
-        ifea.cavg(fea,rat=4,inplace=True)
-        fea.sel(axis=len(fea.shape)-1,len=icfg.get('pfa.dim'),inplace=True)
-        f['pfa']=fea
-
-def sfaget(ftrn,ftst):
-    sfa=ifea.Sfa(ftrn,'pfa')
-    #sfa.save(os.path.join(dmod,'sfa_'+s))
-    for f in ftrn+ftst:
-        if not 'sfa' in f: f['sfa']=sfa.do(f['pfa'])
+importlib.reload(ihelp)
 
 def prtres(prob,flst):
     eer,cm=icls.eer(prob,flst=flst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
     return 'EER: %6.2f%% CM: %6.2f%%'%(eer*100,cm*100)
 
-def svmtrn(ftrn,ftst,fea,s,**kwargs):
+def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+s)
     csvm=isvm.trn(ftrn,fea,**kwargs)
     prob=isvm.evlp(csvm,ftst,fea)[:,0]
     print('svm finish '+s+' '+prtres(prob,ftst))
     return prob
 
-def hmmtrn(ftrn,ftst,fea,s):
+def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm start  '+s)
     chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3)
     nld=ihmm.evlp(chmm,flst=ftst,fea=fea)
@@ -93,7 +55,7 @@ def hmmtrn(ftrn,ftst,fea,s):
     return np.concatenate((prob.reshape(-1,1),nld),axis=1)
     #return prob
 
-def dnntrn(ftrn,ftst,fea,s,**kwargs):
+def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
     cdnn=idnn.trn(ftrn,ftst,fea=fea,dmod=dmod,**kwargs)
     prob=idnn.evlp(cdnn,ftst,fea=fea)[:,0]
@@ -237,11 +199,8 @@ for typ in ['sig','pfa']:
 if senuse==sen and fdb_chg: ifdb.save(fdb)
 
 print("fealnk")
-for flst in [*ftsts.values(),*ftrns.values()]:
-    for f in flst:
-        if not f['fn'] in fdb: raise ValueError('fea missing for: '+fn)
-        for fea,val in fdb[f['fn']].items(): f[fea]=val
-
+fealnk(list(itertools.chain.from_iterable(ftrns.values())),fdb)
+fealnk(list(itertools.chain.from_iterable(ftsts.values())),fdb)
 
 print('sfa')
 do=[s for s in senuse if len([True for f in ftrns[s]+ftsts[s] if not 'sfa' in f])!=0]
@@ -255,17 +214,21 @@ if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
 #dnnrndloop()
 #raise SystemExit()
 
-for cls in ['svm','hmm']:
-    feas=['pfa','sfa','sig']
-    for fea in feas:
+for cls in ['hmm','svm']:
+    for fea in ['sig','pfa','sfa']:
         if cls=='hmm' and ftrns[sen[0]][0][fea].shape[-1]>40: continue
         probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
         if os.path.exists(probfn): continue
+        kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))
+        if kwargs is None: kwargs={}
+        else:
+            print('trnargs = '+kwargs)
+            kwargs=eval(kwargs)
         job=ijob.Job(22 if cls!='dnn' else 1)
         fnctrn=eval(cls+'trn')
         for s in sen:
             if os.path.exists('stop'): job.cleanup(); raise SystemExit()
-            job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s))
+            job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
         prob=[job.res(cls+'trn_'+s) for s in sen]
         np.save(probfn,prob)
 
