@@ -64,12 +64,13 @@ fns=argv2resfns('prob_',sys.argv[2:])
 for fn in sorted(fns):
     prob=np.load(fn)
     msg=''
+    if fn[-8:]=='_old.npy': continue
     if fn.find('_hmm_')>=0 and prob.shape[-1]==3:
         if np.sum(prob.take(2,-1)!=prob.take(2,-1)[0])==0: msg=' ERR in hmm[1]'
         prob=hmmprob(prob.take([1,2],-1))
         #prob=prob.take(0,-1)
 
-    okpat=okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
+    okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
     #okpat='Z0[01]'
     eer,cm=icls.eer(prob,flst=ftst,okpat=okpat)
     
