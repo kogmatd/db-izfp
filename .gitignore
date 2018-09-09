@@ -6,3 +6,5 @@ log
 model
 .*.swp
 .*.swo
+__pycache__
+info.txt
