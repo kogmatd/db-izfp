@@ -84,7 +84,7 @@ def dnnrnd():
     kwargs['s']=sen[int(random.random()*len(sen))]
     kwargs['fea']=['sig','pfa','sfa'][int(random.random()*3)]
     kwargs['weight_decay']=(random.random()**4)*0.4
-    kwargs['base_lr']=(random.random()**2)*0.1+0.02
+    kwargs['base_lr']=(random.random()**2)*0.1+0.001
     lay=[('ip',xip),('dropout',dp),('relu',),('ip',)]
     if True:
         k=int(random.random()*5)+3
