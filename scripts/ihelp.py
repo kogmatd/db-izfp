@@ -3,6 +3,7 @@ import os
 import re
 
 import icfg
+import isig
 import ifea
 
 def rle(x):
@@ -46,7 +47,7 @@ def flstexpandsen(flst,s,okpat):
     for f in flst:
         fn={**f}
         fn['fn']+='.'+s
-        if not re.match(okpat,fn['fn']) is None: fn['lab']='Z00'
+        if not re.match(okpat,fn['lab']) is None: fn['lab']='Z00'
         flsts.append(fn)
     return flsts
 
@@ -56,6 +57,8 @@ def fealnk(flst,fdb):
         for fea,val in fdb[f['fn']].items(): f[fea]=val
 
 def sigget(fns):
+    dsig=icfg.getdir('sig')
+    sigext='.'+icfg.get('sig.ext','wav')
     for f in fns:
         sig=isig.load(os.path.join(dsig,f['fn']+sigext)).rmaxis()
         sig.inc[0]=1/icfg.get('sig.srate')
