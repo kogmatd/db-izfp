@@ -129,15 +129,15 @@ for fea in['sig','pfa','sfa']:
         bins=np.linspace(0,1,30)
         if p=='base_lr': bins=(bins**2)*0.1+0.001
         if p=='weight_decay': bins=(bins**4)*0.4
-        if p=='conv_k': bins=bins*5+3
+        if p=='conv_k': bins=bins*29+1
         if p=='conv_o': bins=bins*15+10
-        if p=='conv_s': bins=bins*3+1
+        if p=='conv_s': bins=bins*15+1
         if p=='ip': bins=(bins**2)*1000+10
         if p=='dropout': bins=(bins**5)*0.5
         if p=='xpar': bins*=np.max([r['par']['xpar'] for r in res])
         ha=np.histogram(a,bins)
         hb=np.histogram(b,bins)
         hx=np.mean([ha[1][1:],ha[1][:-1]],axis=0)
-        #ipl.p2([hx,[ha[0],hb[0]]],title=fea+' '+p)
-        ipl.p2([hx,ha[0]/(ha[0]+hb[0]+(ha[0]+hb[0]==0))*(ha[0]+hb[0]!=0)],title=fea+' '+p)
+        ipl.p2([hx,[ha[0],hb[0]]],title=fea+' '+p)
+        #ipl.p2([hx,ha[0]/(ha[0]+hb[0]+(ha[0]+hb[0]==0))*(ha[0]+hb[0]!=0)],title=fea+' '+p)
 
