@@ -51,8 +51,9 @@ for fn in fns:
         'c':c,
     }
 
-for cls in resh:
-    for fea in resh[cls]:
+for fea in ['sig','pfa','sfa']:
+    for cls in sorted(resh):
+        if not fea in resh[cls]: continue
         c=[]
         s=[]
         res=[]
@@ -69,9 +70,9 @@ for cls in resh:
                 for lres in lcls:
                     cmx[lref][lres]=np.sum(resc[np.array([f['lab']==lref for f in ftst])]==lres)
                     cmx[lref][lres]/=np.sum([f['lab']==lref for f in ftst])
-            cmxa=[(cmx[lref][lres]*100,lref,lres) for lref in lcls for lres in lcls if lres!=lref]
-            cmxamax=cmxa[np.array(cmxa)[:,0].argmax()]
-            msg=' MAX-ER: %5.1f%% (%s=>%s)'%cmxamax
+            cmxmax=np.max([cmx[lref][lres] for lref in lcls for lres in lcls if lres!=lref])
+            cmxmaxl=str.join(' ',[lref+'<=>'+lres for lref in lcls for lres in lcls if lres!=lref and cmx[lref][lres]==cmxmax])
+            msg=' MAX-ER: %5.1f%% (%s)'%(cmxmax*100,cmxmaxl)
         else:
             cma=[]
             for l1i in range(len(lcls)):
@@ -88,5 +89,6 @@ for cls in resh:
                     else: cm=(r2.min()-r1.max())/(r2m-r1m)
                     cma.append((cm*100,l1,l2))
             cmmin=cma[np.array(cma)[:,0].argmin()]
-            msg=' MAX-ER: 0 MIN-CM %5.1f%% (%s<=>%s)'%cmmin
-        print('%s %s [%3i] best %5.1f%%/%s mix %5.1f%%%s'%(cls,fea,len(resh[cls][fea]),cmax*100,smax,cmix*100,msg))
+            msg=' MAX-ER:   0.0%% MIN-CM %5.1f%% (%s<=>%s)'%cmmin
+        print('%s %s [%3i] best %5.1f%%/%s mix %5.1f%%%s'%(fea,cls,len(resh[cls][fea]),cmax*100,smax,cmix*100,msg))
+
