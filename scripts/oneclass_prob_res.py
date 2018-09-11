@@ -52,15 +52,25 @@ def hmmprob(nld):
 
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG prob_*.npy")
+if sys.argv[1]=='csv':
+    for cfgi in range(0,4):
+        if cfgi==0: cfg='../als/oneclass/info/default.cfg'
+        else: cfg='../cfk/X%i-oneclass/info/default.cfg'%cfgi
+        os.system(str.join(' ',['python3',sys.argv[0],cfg,'csv']))
+    raise SystemExit()
 icfg.Cfg(sys.argv[1])
+ocsv=len(sys.argv)>2 and sys.argv[2]=='csv'
+if ocsv: sys.argv.remove('csv')
+fns=sys.argv[2:]
 
 ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
 
 lab=ihelp.rle([f['lab'] for f in ftst])
 
-fns=argv2resfns('prob_',sys.argv[2:])
+fns=argv2resfns('prob_',fns)
 
+out=[]
 for fn in sorted(fns):
     prob=np.load(fn)
     msg=''
@@ -79,7 +89,16 @@ for fn in sorted(fns):
     if np.max(prob.mean(0))<0.4: msg+=' ERR low max %.2f'%(np.max(prob.mean(0)))
     if np.min(prob.mean(0))>0.6: msg+=' ERR high min %.2f'%(np.min(prob.mean(0)))
 
-    print('%-20s EER: %6.2f%% CM: %6.2f%%%s'%(os.path.basename(fn),eer*100,cm*100,msg))
+    if ocsv:
+        (cls,fea)=os.path.basename(fn)[5:-4].split('_')
+        out.append('"%s" "%s" "%s" %s %s "%s"'%(
+            icfg.get('db').split('/')[-1]+'/'+icfg.get('exp'),
+            fea,cls,
+            '%.1f%%'%(eer*100) if eer!=0 else '---',
+            '%.1f%%'%(cm*100)  if eer==0 else '---',
+            msg[1:]
+        ))
+    else: print('%-20s EER: %6.2f%% CM: %6.2f%%%s'%(os.path.basename(fn),eer*100,cm*100,msg))
 
     if len(fns)==1:
         probm=np.mean(prob,axis=0)
@@ -90,3 +109,10 @@ for fn in sorted(fns):
 
     #plot_roc(ftst,prob)
 
+lo=None
+for o in sorted(out):
+    to=o.split(' ')[:2]
+    if not lo is None and lo!=to: print('')
+    lo=to
+    print(o)
+print('')
