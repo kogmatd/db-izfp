@@ -18,8 +18,16 @@ importlib.reload(icfg)
 importlib.reload(icls)
 importlib.reload(ihelp)
 
-if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG prob_*.npy")
+if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" (CFG prob_*.npy | csv)")
+if sys.argv[1]=='csv':
+    for cfgi in range(1,4):
+        cfg='../cfk/X%i/info/default.cfg'%cfgi
+        os.system(str.join(' ',['python3',sys.argv[0],cfg,'csv']))
+    raise SystemExit()
 icfg.Cfg(sys.argv[1])
+ocsv=len(sys.argv)>2 and sys.argv[2]=='csv'
+if ocsv: sys.argv.remove('csv')
+fns=sys.argv[2:]
 
 ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
@@ -31,7 +39,7 @@ for f in ftst:
 lab=ihelp.rle([f['lab'] for f in ftst])
 labs=np.array([l[2] for l in lab])
 
-fns=argv2resfns('res_',sys.argv[2:])
+fns=argv2resfns('res_',fns)
 
 lcls=icls.getcls(ftst)
 
@@ -39,6 +47,7 @@ resh={}
 for fn in fns:
     cls,fea,s=os.path.basename(fn)[4:-4].split('_')
     res=np.load(fn)
+    if res.shape==(0,): res=np.zeros((len(ftst),len(lcls)))
     if cls=='hmm': res=-res
     resc=labs[res.argmax(axis=-1)]
     c=np.sum(resc==[f['lab'] for f in ftst])/len(ftst)
@@ -51,7 +60,12 @@ for fn in fns:
         'c':c,
     }
 
-for fea in ['sig','pfa','sfa']:
+feas=sorted({fea for rc in resh.values() for fea in rc.keys()})
+sens=sorted({s for rc in resh.values() for rf in rc.values() for s in rf.keys()})
+
+#feas=['pfa']
+
+for fea in feas:
     for cls in sorted(resh):
         if not fea in resh[cls]: continue
         c=[]
@@ -71,8 +85,9 @@ for fea in ['sig','pfa','sfa']:
                     cmx[lref][lres]=np.sum(resc[np.array([f['lab']==lref for f in ftst])]==lres)
                     cmx[lref][lres]/=np.sum([f['lab']==lref for f in ftst])
             cmxmax=np.max([cmx[lref][lres] for lref in lcls for lres in lcls if lres!=lref])
-            cmxmaxl=str.join(' ',[lref+'<=>'+lres for lref in lcls for lres in lcls if lres!=lref and cmx[lref][lres]==cmxmax])
+            cmxmaxl=str.join(' ',[lref+'=>'+lres for lref in lcls for lres in lcls if lres!=lref and cmx[lref][lres]==cmxmax])
             msg=' MAX-ER: %5.1f%% (%s)'%(cmxmax*100,cmxmaxl)
+            cmmin=None
         else:
             cma=[]
             for l1i in range(len(lcls)):
@@ -90,5 +105,30 @@ for fea in ['sig','pfa','sfa']:
                     cma.append((cm*100,l1,l2))
             cmmin=cma[np.array(cma)[:,0].argmin()]
             msg=' MAX-ER:   0.0%% MIN-CM %5.1f%% (%s<=>%s)'%cmmin
-        print('%s %s [%3i] best %5.1f%%/%s mix %5.1f%%%s'%(fea,cls,len(resh[cls][fea]),cmax*100,smax,cmix*100,msg))
+            cmxmax=0
+            cmxmaxl='---'
+        misstrain=len([1 for ri in resh[cls][fea].values() if ri['res'].max()==ri['res'].min()])
+        if misstrain>0: msg+=' MISSTRAIN: %i'%(misstrain)
+        if ocsv:
+            print('"%s" "%s" "%s" %s "%s" %s %s "%s" %.1f%% "%s"'%(
+                icfg.get('db').split('/')[-1]+'/'+icfg.get('exp'),
+                fea,cls,
+                '%.1f%%'%((1-cmix)*100) if len(resh[cls][fea])==len(sens) else '"RUN"',
+                cmxmaxl               if cmxmaxl!='---' else '%s<=>%s'%(cmmin[1:]),
+                '%.1f%%'%(cmxmax*100) if cmxmaxl!='---' else '"---"',
+                '%.1f%%'%(cmmin[0])   if cmxmaxl=='---' else '"---"',
+                smax,(1-cmax)*100,
+                'MISSTRAIN: %i'%(misstrain) if misstrain>0 else '',
+            ))
+        else:
+            print('%s %4s [%3i] best %5.1f%%/%s mix %5.1f%%%s'%(
+                fea,cls,len(resh[cls][fea]),
+                cmax*100,smax,
+                cmix*100,msg
+            ))
+    print('')
+
+#resmat=np.array([[(resh[cls][fea][si]['c'] if si in resh[cls][fea] else 0) for si in sens] for fea in feas for cls in sorted(resh) if fea in resh[cls]])
+#ipl.p2(resmat,nox=True)
+#ipl.p2(resmat[:,np.argsort(resmat.mean(axis=0))])
 
