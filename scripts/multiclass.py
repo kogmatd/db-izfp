@@ -137,12 +137,13 @@ sen=getsensors()
 senuse=sen#[:1]
 
 #clsuse=['hmm']
-clsuse=['svm']
+#clsuse=['svm']
 #clsuse=['dnn']
 #clsuse=['cnn','dnn']
+clsuse=['cnnb','cnn','dnn']
 
 #feause=['pfa']
-feause=['sig','pfa','sfa']
+feause=['pfa','sfa','sig']
 
 okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
 
@@ -193,20 +194,21 @@ def run_sen(s):
             if cls=='hmm' and ftrns[0][fea].shape[-1]>40: continue
             resfn=os.path.join(dlog,'res_'+cls+'_'+fea+'_'+s+'.npy')
             if os.path.exists(resfn): continue
+            print('####################',fea,cls,s,'####################')
             kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))
             if kwargs is None:
-                if cls=='dnn' or cls=='cnn': continue
+                if cls=='dnn' or cls[:3]=='cnn': continue
                 kwargs={}
             else:
                 print('trnargs = '+kwargs)
                 kwargs=eval(kwargs)
-            fnctrn=eval(cls+'trn')
+            fnctrn=eval(cls[:3]+'trn')
             res=fnctrn(ftrns,ftsts,fea,s,kwargs)
             np.save(resfn,res)
 
 if len(senuse)==1: run_sen(senuse[0])
 else:
-    job=ijob.Job(1 if 'dnn' in clsuse or 'cnn' in clsuse else maxjob)
+    job=ijob.Job(1 if len([cls for cls in clsuse if cls=='dnn' or cls[:3]=='cnn'])>0 else maxjob)
     for s in senuse:
         if os.path.exists('stop'): job.cleanup(); raise SystemExit()
         job.start('run_'+s,run_sen,(s,))
