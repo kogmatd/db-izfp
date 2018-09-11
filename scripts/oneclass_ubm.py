@@ -4,6 +4,7 @@ import os
 import sys
 import re
 import time
+import itertools
 import importlib
 import numpy as np
 
