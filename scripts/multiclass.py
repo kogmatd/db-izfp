@@ -77,7 +77,7 @@ def dnntest(s,fea='sfa',**kwargs):
     fdb=ifdb.load(s)
     fealnk(ftrns+ftsts,fdb)
     ftrns=icls.equalcls(ftrns)
-    cdnn=idnn.trn(ftrns,ftsts,fea=fea,dmod=dmod,**kwargs)
+    cdnn=idnn.trn(ftrns,ftsts,fea=fea,dmod=dmod,verbose=True,**kwargs)
     if not cdnn is None: cdnn['idim']=ftrns[0][fea].shape
     return cdnn
 
@@ -150,6 +150,34 @@ okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
 maxjob=12
 
 if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
+
+if len(sys.argv)>2 and sys.argv[2]=='reg':
+    def cor(x,y):
+        a=x-np.mean(x)
+        b=y-np.mean(y)
+        if np.max(np.abs(a))==0: return 0
+        if np.max(np.abs(b))==0: return 0
+        return np.sum(a*b)/np.sqrt(np.sum(a*a)*np.sum(b*b))
+    def eloss(x,y): return np.sum((x-y)**2)/len(x)/2
+    s='A1A2'
+    ftrns=flstexpandsen(ftrn,s,okpat)
+    ftsts=flstexpandsen(ftst,s,okpat)
+    fdb=ifdb.load(s)
+    fealnk(ftrns+ftsts,fdb)
+    ftrns=icls.equalcls(ftrns)
+    ftsts=icls.equalcls(ftsts)
+    for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])/37
+
+    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=200,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01)
+
+    x=cdnn['solv'].test_nets[0].blobs['label'].data
+    y=cdnn['solv'].test_nets[0].blobs['ip2'].data[:,0]
+    print('loss: %.2f %.2f'%(eloss(x,y),cdnn['solv'].test_nets[0].blobs['loss'].data))
+    print('cor:  %.2f %.2f'%(cor(x,y),  cdnn['solv'].test_nets[0].blobs['acc'].data))
+
+    res=idnn.evlp(cdnn,ftsts,fea='pfa')*37
+
+    raise SystemExit()
 
 def run_sen(s):
 
