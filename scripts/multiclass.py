@@ -57,13 +57,15 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+fea+'_'+s)
+    if 'regression' in kwargs:
+        for f in ftrn+ftst: f['lab']=float(f['lab'][1:])
     cdnn=idnn.trn(ftrn,ftst,fea=fea,dmod=dmod,**kwargs)
     if cdnn is None:
         print('dnn failed '+fea+'_'+s)
         return []
     else:
         prob=idnn.evlp(cdnn,ftst,fea=fea)
-        if icfg.get('exp')=='triclass':
+        if icfg.get('exp')=='triclass' or 'regression' in kwargs:
             print('dnn finish '+fea+'_'+s)
         else:
             res=np.array(cdnn['cls'])[prob.argmax(axis=1)]
@@ -135,6 +137,7 @@ dlog=icfg.getdir('log')
 sen=getsensors()
 
 senuse=sen#[:1]
+#senuse=['D1B2']
 
 #clsuse=['hmm']
 #clsuse=['svm']
@@ -166,16 +169,19 @@ if len(sys.argv)>2 and sys.argv[2]=='reg':
     fealnk(ftrns+ftsts,fdb)
     ftrns=icls.equalcls(ftrns)
     ftsts=icls.equalcls(ftsts)
-    for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])/37
+    for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])
+    l=np.array([f['lab'] for f in ftsts])
 
-    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=200,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01)
+    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=500,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01,labtransform={'off':-18.5,'scale':5/37})
 
     x=cdnn['solv'].test_nets[0].blobs['label'].data
     y=cdnn['solv'].test_nets[0].blobs['ip2'].data[:,0]
     print('loss: %.2f %.2f'%(eloss(x,y),cdnn['solv'].test_nets[0].blobs['loss'].data))
     print('cor:  %.2f %.2f'%(cor(x,y),  cdnn['solv'].test_nets[0].blobs['acc'].data))
 
-    res=idnn.evlp(cdnn,ftsts,fea='pfa')*37
+    res=idnn.evlp(cdnn,ftsts,fea='pfa').flatten()
+
+    #ipl.p2((res,l),nox=True)
 
     raise SystemExit()
 
