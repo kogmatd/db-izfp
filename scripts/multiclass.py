@@ -57,7 +57,7 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+fea+'_'+s)
-    if 'regression' in kwargs:
+    if icfg.get('trn.regression')==True:
         for f in ftrn+ftst: f['lab']=float(f['lab'][1:])
     cdnn=idnn.trn(ftrn,ftst,fea=fea,dmod=dmod,**kwargs)
     if cdnn is None:
@@ -65,7 +65,7 @@ def dnntrn(ftrn,ftst,fea,s,kwargs={}):
         return []
     else:
         prob=idnn.evlp(cdnn,ftst,fea=fea)
-        if icfg.get('exp')=='triclass' or 'regression' in kwargs:
+        if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
             print('dnn finish '+fea+'_'+s)
         else:
             res=np.array(cdnn['cls'])[prob.argmax(axis=1)]
@@ -78,7 +78,7 @@ def dnntest(s,fea='sfa',**kwargs):
     ftsts=flstexpandsen(ftst,s,okpat)
     fdb=ifdb.load(s)
     fealnk(ftrns+ftsts,fdb)
-    ftrns=icls.equalcls(ftrns)
+    if icfg.get('trn.regression')!=True: ftrns=icls.equalcls(ftrns)
     cdnn=idnn.trn(ftrns,ftsts,fea=fea,dmod=dmod,verbose=True,**kwargs)
     if not cdnn is None: cdnn['idim']=ftrns[0][fea].shape
     return cdnn
@@ -142,6 +142,7 @@ senuse=sen#[:1]
 #clsuse=['hmm']
 #clsuse=['svm']
 #clsuse=['dnn']
+#clsuse=['cnnb']
 #clsuse=['cnn','dnn']
 clsuse=['cnnb','cnn','dnn']
 
@@ -220,7 +221,7 @@ def run_sen(s):
 
     if fdb_chg: ifdb.save(fdb,s)
 
-    ftrns=icls.equalcls(ftrns)
+    if icfg.get('trn.regression')!=True: ftrns=icls.equalcls(ftrns)
     if len(sys.argv)>2 and sys.argv[2]=='-n': return
 
     for cls in clsuse:
