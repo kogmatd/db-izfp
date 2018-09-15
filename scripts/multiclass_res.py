@@ -42,6 +42,7 @@ fns=sys.argv[2:]
 ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
 sen=getsensors()
+regression=icfg.get('trn.regression')==True
 
 okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
 for f in ftst:
@@ -53,6 +54,10 @@ labs=np.array([l[2] for l in lab])
 fns=argv2resfns('res_',fns)
 
 lcls=icls.getcls(ftst)
+if regression:
+    icls.labf(ftst)
+    lab=np.array([f['labf'] for f in ftst])
+    lfcls=[i[-1] for i in rle(sorted(lab))]
 
 resh={}
 for fn in fns:
@@ -60,7 +65,7 @@ for fn in fns:
     res=np.load(fn)
     if res.shape==(0,): continue
     h={'res':res}
-    if icfg.get('trn.regression')==True:
+    if regression:
         h['c']=0
     else:
         if cls=='hmm': res=-res
@@ -83,12 +88,10 @@ for fea in feas:
         s=[]
         res=[]
         for si,ri in resh[cls][fea].items(): s.append(si); c.append(ri['c']); res.append(ri['res'])
-        if icfg.get('trn.regression'):
+        if regression:
             res=np.array(res)
             if res.shape[-1]==1: res=res.reshape(res.shape[:-1])
             mres=np.mean(res,axis=0)
-            lab=np.array([float(f['lab'][1:]) for f in ftst])
-            lfcls=list(map(lambda l:float(l[1:]), lcls))
             acor=cor(mres,lab)
             amse=mse(mres,lab)
             lmse=[mse(mres[lab==l],l) for l in lfcls]

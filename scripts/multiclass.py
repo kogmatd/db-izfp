@@ -131,6 +131,7 @@ ftst=icfg.readflst('test')
 dmod=icfg.getdir('model')
 dlog=icfg.getdir('log')
 sen=getsensors()
+regression=icfg.get('trn.regression')==True
 
 senuse=sen
 #senuse=['A1A2']
@@ -166,7 +167,7 @@ if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
 #    fealnk(ftrns+ftsts,fdb)
 #    ftrns=icls.equalcls(ftrns)
 #    ftsts=icls.equalcls(ftsts)
-#    for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])
+#    icls.labf(ftrns+ftsts)
 #    l=np.array([f['lab'] for f in ftsts])
 #
 #    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=500,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01,labtransform={'off':-18.5,'scale':5/37})
@@ -217,9 +218,7 @@ def run_sen(s):
 
     if fdb_chg: ifdb.save(fdb,s)
 
-    if icfg.get('trn.regression')!=True: ftrns=icls.equalcls(ftrns)
-    else:
-        for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])
+    if not regression: ftrns=icls.equalcls(ftrns)
 
     if len(sys.argv)>2 and sys.argv[2]=='-n': return
 
@@ -236,9 +235,13 @@ def run_sen(s):
             else:
                 print('trnargs = '+kwargs)
                 kwargs=eval(kwargs)
+            kwargs['regression']=regression
             fnctrn=eval(cls[:3]+'trn')
-            res=fnctrn(ftrns,ftsts,fea,s,kwargs)
-            if len(res)>0: np.save(resfn,res)
+            for i in range(3):
+                res=fnctrn(ftrns,ftsts,fea,s,kwargs)
+                if len(res)>0:
+                    np.save(resfn,res)
+                    break
 
 if len(senuse)==1: run_sen(senuse[0])
 else:
