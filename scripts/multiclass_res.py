@@ -41,6 +41,7 @@ fns=sys.argv[2:]
 
 ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
+sen=getsensors()
 
 okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
 for f in ftst:
@@ -57,18 +58,18 @@ resh={}
 for fn in fns:
     cls,fea,s=os.path.basename(fn)[4:-4].split('_')
     res=np.load(fn)
-    if res.shape==(0,): res=np.zeros((len(ftst),1 if icfg.get('trn.regression')==True else len(lcls)))
-    if cls=='hmm': res=-res
-    resc=labs[res.argmax(axis=-1)]
-    c=np.sum(resc==[f['lab'] for f in ftst])/len(ftst)
+    if res.shape==(0,): continue
+    h={'res':res}
+    if icfg.get('trn.regression')==True:
+        h['c']=0
+    else:
+        if cls=='hmm': res=-res
+        h['resc']=resc=labs[res.argmax(axis=-1)]
+        h['c']=np.sum(resc==[f['lab'] for f in ftst])/len(ftst)
     if not cls in resh: resh[cls]={}
     if not fea in resh[cls]: resh[cls][fea]={}
     if s in resh[cls][fea]: raise ValueError("duplicate")
-    resh[cls][fea][s]={
-        'res':res,
-        'resc':resc,
-        'c':c,
-    }
+    resh[cls][fea][s]=h
 
 feas=sorted({fea for rc in resh.values() for fea in rc.keys()})
 sens=sorted({s for rc in resh.values() for rf in rc.values() for s in rf.keys()})
@@ -84,22 +85,21 @@ for fea in feas:
         for si,ri in resh[cls][fea].items(): s.append(si); c.append(ri['c']); res.append(ri['res'])
         if icfg.get('trn.regression'):
             res=np.array(res)
-            res=res.reshape(res.shape[:-1])
-            ressel=res[np.min(res,1)!=np.max(res,1)]
-            mres=np.mean(ressel,axis=0)
+            if res.shape[-1]==1: res=res.reshape(res.shape[:-1])
+            mres=np.mean(res,axis=0)
             lab=np.array([float(f['lab'][1:]) for f in ftst])
             lfcls=list(map(lambda l:float(l[1:]), lcls))
             acor=cor(mres,lab)
             amse=mse(mres,lab)
             lmse=[mse(mres[lab==l],l) for l in lfcls]
             print('%s %-7s [%3i/%3i] MEAN cor: %.3f mse: %5.2f max-mse: %5.2f/%s Z00/1-mse: %5.2f, %5.2f'%(
-                fea,cls,len(resh[cls][fea]),len(ressel),
+                fea,cls,len(resh[cls][fea]),len(sen),
                 acor,amse,np.max(lmse),lcls[np.argmax(lmse)],*lmse[:2]
             ))
             bcor=[cor(r,lab) for r in res]
             bmse=[mse(r,lab) for r in res]
             #print('%s %-7s [%3i/%3i] BEST cor: %.3f/%s mse: %5.2f/%s'%(
-            #    fea,cls,len(resh[cls][fea]),len(ressel),
+            #    fea,cls,len(resh[cls][fea]),len(sen),
             #    np.max(bcor),str(np.argmax(bcor)),
             #    np.max(bmse),str(np.argmax(bmse)),
             #))

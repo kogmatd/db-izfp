@@ -37,8 +37,6 @@ importlib.reload(ihelp)
 
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
-    #if not 'C' in kwargs: kwargs['C']=1
-    #if not 'tol' in kwargs: kwargs['tol']=0.1
     csvm=isvm.trn(ftrn,fea,**kwargs)
     prob=isvm.evlp(csvm,ftst,fea)
     print('svm finish '+fea+'_'+s)
@@ -48,7 +46,7 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm start  '+fea+'_'+s)
     chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3)
     nld=ihmm.evlp(chmm,flst=ftst,fea=fea)
-    if icfg.get('exp')=='triclass':
+    if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
         print('hmm finish '+fea+'_'+s)
     else:
         res=np.array(chmm['cls'])[nld.argmin(axis=1)]
@@ -57,8 +55,6 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+fea+'_'+s)
-    if icfg.get('trn.regression')==True:
-        for f in ftrn+ftst: f['lab']=float(f['lab'][1:])
     cdnn=idnn.trn(ftrn,ftst,fea=fea,dmod=dmod,**kwargs)
     if cdnn is None:
         print('dnn failed '+fea+'_'+s)
@@ -136,55 +132,55 @@ dmod=icfg.getdir('model')
 dlog=icfg.getdir('log')
 sen=getsensors()
 
-senuse=sen#[:1]
-#senuse=['D1B2']
+senuse=sen
+#senuse=['A1A2']
 
 #clsuse=['hmm']
 #clsuse=['svm']
 #clsuse=['dnn']
-#clsuse=['cnnb']
+clsuse=['cnnb']
 #clsuse=['cnn','dnn']
-clsuse=['cnnb','cnn','dnn']
+#clsuse=['cnnb','cnn','dnn']
 
 #feause=['pfa']
 feause=['pfa','sfa','sig']
 
 okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
 
-maxjob=12
+maxjob=18
 
 if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
 
-if len(sys.argv)>2 and sys.argv[2]=='reg':
-    def cor(x,y):
-        a=x-np.mean(x)
-        b=y-np.mean(y)
-        if np.max(np.abs(a))==0: return 0
-        if np.max(np.abs(b))==0: return 0
-        return np.sum(a*b)/np.sqrt(np.sum(a*a)*np.sum(b*b))
-    def eloss(x,y): return np.sum((x-y)**2)/len(x)/2
-    s='A1A2'
-    ftrns=flstexpandsen(ftrn,s,okpat)
-    ftsts=flstexpandsen(ftst,s,okpat)
-    fdb=ifdb.load(s)
-    fealnk(ftrns+ftsts,fdb)
-    ftrns=icls.equalcls(ftrns)
-    ftsts=icls.equalcls(ftsts)
-    for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])
-    l=np.array([f['lab'] for f in ftsts])
-
-    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=500,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01,labtransform={'off':-18.5,'scale':5/37})
-
-    x=cdnn['solv'].test_nets[0].blobs['label'].data
-    y=cdnn['solv'].test_nets[0].blobs['ip2'].data[:,0]
-    print('loss: %.2f %.2f'%(eloss(x,y),cdnn['solv'].test_nets[0].blobs['loss'].data))
-    print('cor:  %.2f %.2f'%(cor(x,y),  cdnn['solv'].test_nets[0].blobs['acc'].data))
-
-    res=idnn.evlp(cdnn,ftsts,fea='pfa').flatten()
-
-    #ipl.p2((res,l),nox=True)
-
-    raise SystemExit()
+#if len(sys.argv)>2 and sys.argv[2]=='reg':
+#    def cor(x,y):
+#        a=x-np.mean(x)
+#        b=y-np.mean(y)
+#        if np.max(np.abs(a))==0: return 0
+#        if np.max(np.abs(b))==0: return 0
+#        return np.sum(a*b)/np.sqrt(np.sum(a*a)*np.sum(b*b))
+#    def eloss(x,y): return np.sum((x-y)**2)/len(x)/2
+#    s='A1A2'
+#    ftrns=flstexpandsen(ftrn,s,okpat)
+#    ftsts=flstexpandsen(ftst,s,okpat)
+#    fdb=ifdb.load(s)
+#    fealnk(ftrns+ftsts,fdb)
+#    ftrns=icls.equalcls(ftrns)
+#    ftsts=icls.equalcls(ftsts)
+#    for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])
+#    l=np.array([f['lab'] for f in ftsts])
+#
+#    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=500,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01,labtransform={'off':-18.5,'scale':5/37})
+#
+#    x=cdnn['solv'].test_nets[0].blobs['label'].data
+#    y=cdnn['solv'].test_nets[0].blobs['ip2'].data[:,0]
+#    print('loss: %.2f %.2f'%(eloss(x,y),cdnn['solv'].test_nets[0].blobs['loss'].data))
+#    print('cor:  %.2f %.2f'%(cor(x,y),  cdnn['solv'].test_nets[0].blobs['acc'].data))
+#
+#    res=idnn.evlp(cdnn,ftsts,fea='pfa').flatten()
+#
+#    #ipl.p2((res,l),nox=True)
+#
+#    raise SystemExit()
 
 def run_sen(s):
 
@@ -222,6 +218,9 @@ def run_sen(s):
     if fdb_chg: ifdb.save(fdb,s)
 
     if icfg.get('trn.regression')!=True: ftrns=icls.equalcls(ftrns)
+    else:
+        for f in ftrns+ftsts: f['lab']=float(f['lab'][1:])
+
     if len(sys.argv)>2 and sys.argv[2]=='-n': return
 
     for cls in clsuse:
@@ -239,7 +238,7 @@ def run_sen(s):
                 kwargs=eval(kwargs)
             fnctrn=eval(cls[:3]+'trn')
             res=fnctrn(ftrns,ftsts,fea,s,kwargs)
-            np.save(resfn,res)
+            if len(res)>0: np.save(resfn,res)
 
 if len(senuse)==1: run_sen(senuse[0])
 else:
