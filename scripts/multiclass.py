@@ -44,7 +44,7 @@ def svmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm start  '+fea+'_'+s)
-    chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3)
+    chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3,**kwargs)
     nld=ihmm.evlp(chmm,flst=ftst,fea=fea)
     if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
         print('hmm finish '+fea+'_'+s)
@@ -136,10 +136,10 @@ regression=icfg.get('trn.regression')==True
 senuse=sen
 #senuse=['A1A2']
 
-#clsuse=['hmm']
+clsuse=['hmm']
 #clsuse=['svm']
 #clsuse=['dnn']
-clsuse=['cnnb']
+#clsuse=['cnnb']
 #clsuse=['cnn','dnn']
 #clsuse=['cnnb','cnn','dnn']
 
