@@ -34,6 +34,7 @@ importlib.reload(idat)
 importlib.reload(ijob)
 importlib.reload(ifdb)
 importlib.reload(ihelp)
+icnn=idnn
 
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
@@ -244,6 +245,8 @@ def run_sen(s):
                 (mod,restrn,restst)=fnctrn(ftrns,ftsts,fea,s,kwargs)
                 if len(restst)>0:
                     np.save(resfn,restst)
+                    np.save(resfn[:-4]+'_trn.npy',restrn)
+                    eval('i'+cls[:3]+'.save')(resfn[:-4]+'.model',mod)
                     break
 
 if len(senuse)==1: run_sen(senuse[0])
