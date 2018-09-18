@@ -38,20 +38,22 @@ importlib.reload(ihelp)
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
     csvm=isvm.trn(ftrn,fea,**kwargs)
-    prob=isvm.evlp(csvm,ftst,fea)
+    restrn=isvm.evlp(csvm,ftrn,fea)
+    restst=isvm.evlp(csvm,ftst,fea)
     print('svm finish '+fea+'_'+s)
-    return prob
+    return (csvm,restrn,restst)
 
 def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm start  '+fea+'_'+s)
     chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3,**kwargs)
-    nld=ihmm.evlp(chmm,flst=ftst,fea=fea)
+    nldtrn=ihmm.evlp(chmm,flst=ftrn,fea=fea)
+    nldtst=ihmm.evlp(chmm,flst=ftst,fea=fea)
     if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
         print('hmm finish '+fea+'_'+s)
     else:
-        res=np.array(chmm['cls'])[nld.argmin(axis=1)]
+        res=np.array(chmm['cls'])[nldtst.argmin(axis=1)]
         icls.cmp(ftst,res,'hmm finish '+fea+'_'+s)
-    return nld
+    return (chmm,nldtrn,nldtst)
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+fea+'_'+s)
@@ -60,13 +62,14 @@ def dnntrn(ftrn,ftst,fea,s,kwargs={}):
         print('dnn failed '+fea+'_'+s)
         return []
     else:
-        prob=idnn.evlp(cdnn,ftst,fea=fea)
+        restrn=idnn.evlp(cdnn,ftrn,fea=fea)
+        restst=idnn.evlp(cdnn,ftst,fea=fea)
         if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
             print('dnn finish '+fea+'_'+s)
         else:
             res=np.array(cdnn['cls'])[prob.argmax(axis=1)]
             icls.cmp(ftst,res,'dnn finish '+fea+'_'+s)
-        return prob
+        return (cdnn,restrn,restst)
 cnntrn=dnntrn
 
 def dnntest(s,fea='sfa',**kwargs):
@@ -238,9 +241,9 @@ def run_sen(s):
             kwargs['regression']=regression
             fnctrn=eval(cls[:3]+'trn')
             for i in range(3):
-                res=fnctrn(ftrns,ftsts,fea,s,kwargs)
-                if len(res)>0:
-                    np.save(resfn,res)
+                (mod,restrn,restst)=fnctrn(ftrns,ftsts,fea,s,kwargs)
+                if len(restst)>0:
+                    np.save(resfn,restst)
                     break
 
 if len(senuse)==1: run_sen(senuse[0])
