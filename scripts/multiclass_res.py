@@ -95,9 +95,11 @@ for fea in feas:
             acor=cor(mres,lab)
             amse=mse(mres,lab)
             lmse=[mse(mres[lab==l],l) for l in lfcls]
-            print('%s %-7s [%3i/%3i] MEAN cor: %.3f mse: %5.2f max-mse: %5.2f/%s Z00/1-mse: %5.2f, %5.2f'%(
+            eer,cm=icls.eer(mres,flst=ftst,okpat=okpat)
+            print('%s %-7s [%3i/%3i] MEAN cor: %.3f mse: %5.2f max-mse: %5.2f/%s Z00/1-mse: %5.2f, %5.2f EER: %6.2f%% CM: %6.2f%%'%(
                 fea,cls,len(resh[cls][fea]),len(sen),
-                acor,amse,np.max(lmse),lcls[np.argmax(lmse)],*lmse[:2]
+                acor,amse,np.max(lmse),lcls[np.argmax(lmse)],*lmse[:2],
+                eer*100,cm*100,
             ))
             bcor=[cor(r,lab) for r in res]
             bmse=[mse(r,lab) for r in res]
