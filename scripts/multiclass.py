@@ -7,7 +7,7 @@ import time
 import importlib
 import numpy as np
 
-sys.path.append(os.path.join(os.environ['HOME'],'audiomix/anawav'))
+sys.path.append(os.environ['UASR_HOME']+'-py')
 
 import ipl
 import isig

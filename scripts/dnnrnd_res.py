@@ -5,7 +5,7 @@ import os
 import sys
 import importlib
 
-sys.path.append(os.path.join(os.environ['HOME'],'audiomix/anawav'))
+sys.path.append(os.environ['UASR_HOME']+'-py')
 
 import ipl
 import icfg

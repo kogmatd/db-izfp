@@ -4,7 +4,8 @@ import sys
 import wave
 import numpy as np
 
-sys.path.append('/home/duckhfra/audiomix/anawav')
+sys.path.append(os.environ['UASR_HOME']+'-py')
+
 import ipl
 
 if len(sys.argv)!=2:
