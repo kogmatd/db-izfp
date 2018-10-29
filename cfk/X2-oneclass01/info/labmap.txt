@@ -1,0 +1,17 @@
+## UASR signal to class label map
+## - IZFP CFRP Plate Database
+## - Excitation signal X2 (Ricker Wavelet @ 350 kHz)
+##
+##   first  column: signal label
+##   second column: class label
+
+Z00	GOOD	# Plate intact
+Z01	GOOD	# Plate intact, remounted
+Z02	GOOD	# Plate intact, remounted again
+Z03	Z03 	# Impact 1 (15 J)
+Z04	Z04 	# Impact 2 (25 J)
+Z05	Z05 	# Impact 3 (45 J)
+Z06	Z06 	# Impact 4 (25 J, with pad)
+Z07	Z07 	# Impact 5 (25 J, with pad)
+
+## EOF

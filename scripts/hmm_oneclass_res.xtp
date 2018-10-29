@@ -1,0 +1,24 @@
+#!/usr/bin/env dlabpro
+
+data ass;
+"$1" ass -restore;
+
+data res;
+:ass["Z00"]: res =;
+:ass["REF"]: res -join;
+
+data cls;
+:res["REF"]: 0 cls -compress;
+
+statistics s;
+2 1 cls.nrec cls 0 s -setup;
+res 1 NULL s -update;
+
+data mea; mea s -mean; 1 mea -set nblock;
+data std; std s -sdev; 1 std -set nblock;
+std mea -join;
+
+"hmm_oneclass_res.plot" "ascii" { "#-typ yerrorlines -col 2 -nox" }  stdfile -export;
+"hmm_oneclass_res.plot" "ascii" mea stdfile /append -export;
+
+quit;
