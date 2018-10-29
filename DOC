@@ -1,0 +1,46 @@
+
+als - Aluminium Platte
+	5600 Signale (nur Z00)
+	9400 all.flst
+	38 Klassen:
+		Z00 - kein Fehler
+		Z01 - Spalt 1 mm
+		..
+		Z37 - Spalt 37 mm
+	56 Sensoren:
+		8 Sensoren (A1,A2,B1,B2,C1,C2,D1,D2)
+		=> jeder mit jedem (A1A2,...)
+	Experiment meta:
+		Metaklassifikation
+		2500 all.flst
+	Experiment oneclass:
+		??
+	Experiment svm-sig:
+		??
+
+cfk - CFK Platte
+	8/5 Klassen:
+		Z00=GOOD - Plate intact
+		Z01=GOOD - Plate intact, remounted
+		Z02=GOOD - Plate intact, remounted again
+		Z03 - Impact 1 (15 J)
+		Z04 - Impact 2 (25 J)
+		Z05 - Impact 3 (45 J)
+		Z06 - Impact 4 (25 J, with pad)
+		Z07 - Impact 5 (25 J, with pad)
+	132 Sensoren:
+		12 Sensoren (A1,...,F2)
+		=> jeder mit jedem (A1A2,...)
+	X1 - Exitation signale X1 (Ricker Wavelet @ 100 kHz)
+		6000 all.flst
+	X1-oneclass
+		6000 all.flst
+	X2 - Exitation signale X1 (Ricker Wavelet @ 350 kHz)
+		8000 all.flst
+	X2-oneclass
+		8000 all.flst
+	X3 - Exitation signale X1 (Sinc Function @ 600 kHz)
+		6000 all.flst
+	X3-oneclass
+		6000 all.flst
+

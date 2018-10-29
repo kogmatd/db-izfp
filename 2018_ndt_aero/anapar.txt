@@ -1,0 +1,33 @@
+ALU
+	Srate 6.25MHz
+	Siglen 2500	=> 400 us
+	Crate 32	=> Tinc 5.12 us, Tdim 47
+	Wlen 1024	=> Wlen 163.84 us, Finc 6.104 kHz, Fdim 513, Fmax 3.125 MHz
+	Cavg 4		=> Finc 24.414 kHz, Fdim 128
+	Pfadim 24	
+		=> Fdim 24
+		=> Finc 24.414 kHz
+		=> Fmax 585.938 kHz
+		=> Tdim 47
+		=> Tinc 5.12 us
+		=> Tlen 163.84 us
+		=> Tmax 400 us
+	Sfadim 16
+		=> Fdim 16
+
+CFRP
+	Srate 4.16MHz
+	Siglen 4352	=> 1 ms
+	Crate 32	=> Tinc 7.68 us, Tdim 105
+	Wlen 1024	=> Wlen 245.76 us, Finc 4.069 kHz, Fdim 513, Fmax 2.07 MHz
+	Cavg 4		=> Finc 16.276 kHz, Fdim 128
+	Pfadim 32	
+		=> Fdim 32
+		=> Finc 16.276 kHz
+		=> Fmax 520.833 kHz
+		=> Tdim 105
+		=> Tinc 7.68 us
+		=> Tlen 245.76 us
+		=> Tmax 1 ms
+	Sfadim 16
+		=> Fdim 16
