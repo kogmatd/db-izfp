@@ -1,0 +1,6 @@
+prob_hmm_pfa.npy     EER:   0.00% CM:  26.34%
+prob_hmm_sfa.npy     EER:   0.00% CM:   8.68%
+prob_svm_pfa.npy     EER:   0.21% CM:   0.00%
+prob_svm_sfa.npy     EER:  18.50% CM:   0.00% ERR low max 0.15
+prob_svm_sig.npy     EER:   0.00% CM:  22.80%
+

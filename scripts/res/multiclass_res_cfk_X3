@@ -1,0 +1,15 @@
+pfa  cnn [132] best 100.0%/E1A1 mix 100.0% MAX-ER:   0.0% MIN-CM  85.0% (Z03<=>Z04)
+pfa cnnb [131] best 100.0%/E2C2 mix 100.0% MAX-ER:   0.0% MIN-CM  87.5% (Z03<=>Z04)
+pfa  dnn [132] best  99.7%/E2C2 mix 100.0% MAX-ER:   0.0% MIN-CM  58.3% (Z03<=>Z04)
+pfa  hmm [132] best 100.0%/E1A1 mix   0.0% MAX-ER: 100.0% (Z00=>Z07 Z03=>Z07 Z04=>Z07 Z05=>Z07 Z06=>Z00 Z07=>Z00)
+pfa  svm [132] best 100.0%/D2B2 mix 100.0% MAX-ER:   0.0% MIN-CM  83.9% (Z03<=>Z04)
+
+sfa  cnn [132] best  94.4%/B2E2 mix 100.0% MAX-ER:   0.0% MIN-CM  53.6% (Z03<=>Z04)
+sfa cnnb [131] best  94.0%/B2E2 mix 100.0% MAX-ER:   0.0% MIN-CM  53.7% (Z03<=>Z04)
+sfa  hmm [132] best 100.0%/E1C1 mix   0.0% MAX-ER: 100.0% (Z00=>Z07 Z03=>Z07 Z04=>Z07 Z05=>Z07 Z07=>Z00)
+sfa  svm [132] best 100.0%/E2C2 mix 100.0% MAX-ER:   0.0% MIN-CM  90.3% (Z03<=>Z04)
+
+sig  cnn [132] best  97.7%/B2E2 mix  97.6% MAX-ER:   9.3% (Z03=>Z00)
+sig cnnb [132] best  96.1%/B2E2 mix  93.4% MAX-ER:  39.3% (Z03=>Z00)
+sig  svm [132] best  16.7%/B1D2 mix  16.7% MAX-ER: 100.0% (Z00=>Z07 Z03=>Z07 Z04=>Z07 Z05=>Z07 Z06=>Z07)
+

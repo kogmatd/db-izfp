@@ -1,0 +1,20 @@
+pfa cnnb    [ 56/ 56] MEAN cor: 0.998 mse:  1.16 max-mse: 19.67/Z37 Z00/1-mse:  0.34,  1.03 EER:   0.33% CM:   0.00%
+pfa cnnb_lr [  1/ 56] MEAN cor: 0.999 mse:  0.11 max-mse:  0.75/Z15 Z00/1-mse:  0.11,  0.06 EER:   1.63% CM:   0.00%
+pfa cnnbeql [ 47/ 56] MEAN cor: 0.996 mse:  3.12 max-mse:  6.30/Z01 Z00/1-mse:  5.63,  6.30 EER:   0.50% CM:   0.00%
+pfa hmm     [ 56/ 56] MEAN cor: 1.000 mse:  0.05 max-mse:  0.98/Z32 Z00/1-mse:  0.02,  0.03 EER:   0.33% CM:   0.00%
+pfa hmm_lr  [  1/ 56] MEAN cor: 1.000 mse:  0.02 max-mse:  0.18/Z09 Z00/1-mse:  0.01,  0.01 EER:   0.17% CM:   0.00%
+pfa svm     [ 56/ 56] MEAN cor: 0.974 mse: 47.31 max-mse: 453.45/Z37 Z00/1-mse: 37.12, 27.85 EER:  20.03% CM:   0.00%
+pfa svm_lr  [  1/ 56] MEAN cor: 0.973 mse: 22.17 max-mse: 267.50/Z37 Z00/1-mse: 20.08, 13.46 EER:  23.88% CM:   0.00%
+
+sfa cnnb    [ 56/ 56] MEAN cor: 0.998 mse:  1.29 max-mse: 14.11/Z37 Z00/1-mse:  0.85,  1.65 EER:   0.17% CM:   0.00%
+sfa cnnb_lr [  1/ 56] MEAN cor: 0.999 mse:  0.11 max-mse:  1.16/Z37 Z00/1-mse:  0.08,  0.07 EER:   2.27% CM:   0.00%
+sfa hmm     [ 56/ 56] MEAN cor: 0.999 mse:  0.17 max-mse:  3.92/Z32 Z00/1-mse:  0.07,  0.14 EER:   0.33% CM:   0.00%
+sfa hmm_lr  [  1/ 56] MEAN cor: 1.000 mse:  0.05 max-mse:  0.47/Z32 Z00/1-mse:  0.03,  0.03 EER:   0.67% CM:   0.00%
+sfa svm     [ 56/ 56] MEAN cor: 1.000 mse:  0.08 max-mse:  1.32/Z32 Z00/1-mse:  0.04,  0.06 EER:   0.50% CM:   0.00%
+sfa svm_lr  [  1/ 56] MEAN cor: 1.000 mse:  0.06 max-mse:  0.96/Z32 Z00/1-mse:  0.03,  0.04 EER:   0.50% CM:   0.00%
+
+sig cnnb    [ 56/ 56] MEAN cor: 0.998 mse: 15.96 max-mse: 140.57/Z37 Z00/1-mse: 13.99, 10.99 EER:   0.50% CM:   0.00%
+sig cnnb_lr [  1/ 56] MEAN cor: 1.000 mse:  0.05 max-mse:  0.80/Z37 Z00/1-mse:  0.04,  0.03 EER:   0.67% CM:   0.00%
+sig svm     [ 56/ 56] MEAN cor: 1.000 mse:  0.08 max-mse:  1.14/Z31 Z00/1-mse:  0.04,  0.02 EER:   1.00% CM:   0.00%
+sig svm_lr  [  1/ 56] MEAN cor: 1.000 mse:  0.03 max-mse:  0.37/Z33 Z00/1-mse:  0.05,  0.01 EER:   0.67% CM:   0.00%
+
