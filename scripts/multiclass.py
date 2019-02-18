@@ -61,7 +61,7 @@ def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     cdnn=idnn.trn(ftrn,ftst,fea=fea,dmod=dmod,**kwargs)
     if cdnn is None:
         print('dnn failed '+fea+'_'+s)
-        return []
+        return (None,None,[])
     else:
         restrn=idnn.evlp(cdnn,ftrn,fea=fea)
         restst=idnn.evlp(cdnn,ftst,fea=fea)
@@ -138,12 +138,12 @@ sen=getsensors()
 regression=icfg.get('trn.regression')==True
 
 senuse=sen
-#senuse=['A1A2']
+senuse=['D1B2']
 
-clsuse=['hmm']
+#clsuse=['hmm']
 #clsuse=['svm']
 #clsuse=['dnn']
-#clsuse=['cnnb']
+clsuse=['cnnb']
 #clsuse=['cnn','dnn']
 #clsuse=['cnnb','cnn','dnn']
 
@@ -246,7 +246,7 @@ def run_sen(s):
                 if len(restst)>0:
                     np.save(resfn,restst)
                     np.save(resfn[:-4]+'_trn.npy',restrn)
-                    eval('i'+cls[:3]+'.save')(resfn[:-4]+'.model',mod)
+                    eval('i'+cls[:3]+'.save')(mod,resfn[:-4]+'.model')
                     break
 
 if len(senuse)==1: run_sen(senuse[0])

@@ -12,11 +12,15 @@ import ipl
 import icfg
 import icls
 import ihelp
+import idat
+import ilinreg
 from ihelp import *
 importlib.reload(ipl)
 importlib.reload(icfg)
 importlib.reload(icls)
 importlib.reload(ihelp)
+importlib.reload(idat)
+importlib.reload(ilinreg)
 
 def cor(x,y):
     a=x-np.mean(x)
@@ -27,6 +31,19 @@ def cor(x,y):
 
 def mse(x,y):
     return np.mean((x-y)**2)
+
+def plot_reg(lab,mres,name):
+    fn='res/reg/'+name+'.plot'
+    labc=rle(lab)
+    pl=[(l,np.mean(mres[s:s+e]),np.std(mres[s:s+e])) for s,e,l in labc]
+    with open(fn,'w') as f:
+        f.write('#-title '+name+'\n')
+        f.write('#-xlabel Referenz\n')
+        f.write('#-ylabel Ergebnis\n')
+        f.write('#-col 2\n')
+        f.write('#-typ yerrorlines\n')
+        for p in pl: f.write('%i %.3f %.3f\n'%p)
+
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" (CFG prob_*.npy | csv)")
 if sys.argv[1]=='csv':
@@ -40,6 +57,7 @@ if ocsv: sys.argv.remove('csv')
 fns=sys.argv[2:]
 
 ftst=icfg.readflst('test')
+ftrn=icfg.readflst('train')
 dlog=icfg.getdir('log')
 sen=getsensors()
 regression=icfg.get('trn.regression')==True
@@ -61,10 +79,12 @@ if regression:
 
 resh={}
 for fn in fns:
+    if fn.find('_trn.npy')>=0 or fn.find('.model')>=0: continue
     cls,fea,s=os.path.basename(fn)[4:-4].split('_')
     res=np.load(fn)
     if res.shape==(0,): continue
     h={'res':res}
+    if os.path.exists(fn[:-4]+'_trn.npy'): h['res_trn']=np.load(fn[:-4]+'_trn.npy')
     if regression:
         h['c']=0
     else:
@@ -81,6 +101,22 @@ sens=sorted({s for rc in resh.values() for rf in rc.values() for s in rf.keys()}
 
 #feas=['pfa']
 
+for cls,feah in list(resh.items()):
+    for fea,senh in feah.items():
+           res_trn=[h['res_trn'].flatten() for h in senh.values() if 'res_trn' in h]
+           if len(res_trn)<10: continue
+           res_tst=[h['res'].flatten() for h in senh.values() if 'res_trn' in h]
+           res_trn=np.array(res_trn).transpose()
+           res_tst=np.array(res_tst).transpose()
+           ftrnc=[{'lab':f['lab'],'fea':idat.Dat(rt)} for f,rt in zip(ftrn,res_trn)]
+           icls.labf(ftrnc)
+           ftstc=[{'fea':idat.Dat(rt)} for rt in res_tst]
+           lr=ilinreg.trn(ftrnc)
+           lres=ilinreg.evl(lr,ftstc)
+           if not cls+'_lr' in resh: resh[cls+'_lr']={}
+           resh[cls+'_lr'][fea]={'XX':{'res':lres,'c':0}}
+           
+
 for fea in feas:
     for cls in sorted(resh):
         if not fea in resh[cls]: continue
@@ -95,7 +131,7 @@ for fea in feas:
             acor=cor(mres,lab)
             amse=mse(mres,lab)
             lmse=[mse(mres[lab==l],l) for l in lfcls]
-            eer,cm=icls.eer(mres,flst=ftst,okpat=okpat)
+            eer,cm=icls.eer(1-mres,flst=ftst,okpat=okpat)
             print('%s %-7s [%3i/%3i] MEAN cor: %.3f mse: %5.2f max-mse: %5.2f/%s Z00/1-mse: %5.2f, %5.2f EER: %6.2f%% CM: %6.2f%%'%(
                 fea,cls,len(resh[cls][fea]),len(sen),
                 acor,amse,np.max(lmse),lcls[np.argmax(lmse)],*lmse[:2],
@@ -111,6 +147,7 @@ for fea in feas:
             #ipl.p2((lab,mres),nox=True,title=fea+' '+cls)
             #ipl.p2(res,nox=True,title=fea+' '+cls)
             #raise SystemExit()
+            plot_reg(lab,mres,fea+'_'+cls)
         else:
             cmax=np.max(c)
             smax=np.array(s)[np.argmax(c)]
@@ -167,6 +204,9 @@ for fea in feas:
                     cmix*100,msg
                 ))
     print('')
+
+#plt_clsmeanstd(np.array([r['res'] for r in resh['hmm']['pfa'].values()]),ftst)
+#plt_clsmeanstd(np.array([r['res'] for r in resh['hmm']['pfa'].values()]).mean(0),ftst)
 
 #resmat=np.array([[(resh[cls][fea][si]['c'] if si in resh[cls][fea] else 0) for si in sens] for fea in feas for cls in sorted(resh) if fea in resh[cls]])
 #ipl.p2(resmat,nox=True)

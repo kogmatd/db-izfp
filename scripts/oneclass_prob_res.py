@@ -66,8 +66,6 @@ fns=sys.argv[2:]
 ftst=icfg.readflst('test')
 dlog=icfg.getdir('log')
 
-lab=ihelp.rle([f['lab'] for f in ftst])
-
 fns=argv2resfns('prob_',fns)
 
 out=[]
@@ -101,10 +99,7 @@ for fn in sorted(fns):
     else: print('%-20s EER: %6.2f%% CM: %6.2f%%%s'%(os.path.basename(fn),eer*100,cm*100,msg))
 
     if len(fns)==1:
-        probm=np.mean(prob,axis=0)
-        res=[(int(l[2][1:]),probm[l[0]:l[0]+l[1]]) for l in lab]
-        resmean=[(l,np.mean(r),np.std(r)) for (l,r) in res]
-        ipl.p2(resmean,err='y',xrange=(-1,resmean[-1][0]+1))
+        plt_clsmeanstd(prob.mean(axis=0),ftst)
         #ipl.cm(prob)
 
     #plot_roc(ftst,prob)
