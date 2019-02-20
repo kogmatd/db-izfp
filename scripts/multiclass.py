@@ -74,11 +74,10 @@ def dnntrn(ftrn,ftst,fea,s,kwargs={}):
 cnntrn=dnntrn
 
 def dnntest(s,fea='sfa',**kwargs):
-    ftrns=flstexpandsen(ftrn,s,okpat)
-    ftsts=flstexpandsen(ftst,s,okpat)
     fdb=ifdb.load(s)
-    fealnk(ftrns+ftsts,fdb)
-    if icfg.get('trn.regression')!=True: ftrns=icls.equalcls(ftrns)
+    ftrns=ftrn.expandsensor(s,fdb).maplab(labmap)
+    ftsts=ftst.expandsensor(s,fdb).maplab(labmap)
+    if icfg.get('trn.regression')!=True: ftrns.equalcls()
     cdnn=idnn.trn(ftrns,ftsts,fea=fea,dmod=dmod,verbose=True,**kwargs)
     if not cdnn is None: cdnn['idim']=ftrns[0][fea].shape
     return cdnn
@@ -126,11 +125,10 @@ def dnnrndloop():
     while not os.path.exists('stop'): dnnrnd()
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
-icfg.Cfg(sys.argv[1])
+icfg.Cfg(*sys.argv[1:])
 
 ftrn=icfg.readflst('train')
 ftst=icfg.readflst('test')
-#fdev=[] if icfg.get('flist.dev') is None else icfg.readflst('dev')
 
 dmod=icfg.getdir('model')
 dlog=icfg.getdir('log')
@@ -138,93 +136,30 @@ sen=getsensors()
 regression=icfg.get('trn.regression')==True
 
 senuse=sen
-senuse=['D1B2']
-
-#clsuse=['hmm']
-#clsuse=['svm']
-#clsuse=['dnn']
-clsuse=['cnnb']
-#clsuse=['cnn','dnn']
-#clsuse=['cnnb','cnn','dnn']
-
-#feause=['pfa']
 feause=['pfa','sfa','sig']
+clsuse=['hmm','svm','cnnb','cnn','dnn']
+if not icfg.get('senuse') is None: senuse=icfg.get('senuse').split(',')
+if not icfg.get('feause') is None: feause=icfg.get('feause').split(',')
+if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
 
-okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
+labmap={}
+if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
 
 maxjob=18
 
-if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
-
-#if len(sys.argv)>2 and sys.argv[2]=='reg':
-#    def cor(x,y):
-#        a=x-np.mean(x)
-#        b=y-np.mean(y)
-#        if np.max(np.abs(a))==0: return 0
-#        if np.max(np.abs(b))==0: return 0
-#        return np.sum(a*b)/np.sqrt(np.sum(a*a)*np.sum(b*b))
-#    def eloss(x,y): return np.sum((x-y)**2)/len(x)/2
-#    s='A1A2'
-#    ftrns=flstexpandsen(ftrn,s,okpat)
-#    ftsts=flstexpandsen(ftst,s,okpat)
-#    fdb=ifdb.load(s)
-#    fealnk(ftrns+ftsts,fdb)
-#    ftrns=icls.equalcls(ftrns)
-#    ftsts=icls.equalcls(ftsts)
-#    icls.labf(ftrns+ftsts)
-#    l=np.array([f['lab'] for f in ftsts])
-#
-#    cdnn=idnn.trn(ftrns,ftsts,fea='pfa',dmod=dmod,verbose=True,batch_size=256,max_iter=500,lay=[('conv',[5,17],12,[1,1]),('pool',[3,7],[2,5]),('ip',300),('relu',),('dropout',0.2),('ip',)],base_lr=0.01,labtransform={'off':-18.5,'scale':5/37})
-#
-#    x=cdnn['solv'].test_nets[0].blobs['label'].data
-#    y=cdnn['solv'].test_nets[0].blobs['ip2'].data[:,0]
-#    print('loss: %.2f %.2f'%(eloss(x,y),cdnn['solv'].test_nets[0].blobs['loss'].data))
-#    print('cor:  %.2f %.2f'%(cor(x,y),  cdnn['solv'].test_nets[0].blobs['acc'].data))
-#
-#    res=idnn.evlp(cdnn,ftsts,fea='pfa').flatten()
-#
-#    #ipl.p2((res,l),nox=True)
-#
-#    raise SystemExit()
+if '-nn' in sys.argv: raise SystemExit()
 
 def run_sen(s):
 
     print("flst [%s]"%(s))
-    ftrns=flstexpandsen(ftrn,s,okpat)
-    ftsts=flstexpandsen(ftst,s,okpat)
-
-    fdb=ifdb.load(s)
-
-    for f in ftrns+ftsts:
-        if not f['fn'] in fdb: fdb[f['fn']]={'fn':f['fn']}
-
-    fdb_chg=False
-    for typ in ['sig','pfa']:
-        do=[f for f in fdb.values() if not typ in f]
-        if len(do)==0: continue
-        print('%s [%s]'%(typ,s))
-        fdb_chg=True
-        fnc=eval(typ+'get')
-
-        t=time.time()
-        for i in range(len(do)):
-            if time.time()-t>5:
-                print("%s [%s] %i/%i"%(typ,s,i,len(do)))
-                t=time.time()
-            fnc([do[i]])
-
-    fealnk(ftrns+ftsts,fdb)
-
-    if len([True for f in ftrns+ftsts if not 'sfa' in f])!=0:
-        print('sfa [%s]'%(s))
-        sfaget(ftrns,ftsts)
-        for f in ftrns+ftsts: fdb[f['fn']]['sfa']=f['sfa']
-
-    if fdb_chg: ifdb.save(fdb,s)
-
-    if not regression: ftrns=icls.equalcls(ftrns)
-
-    if len(sys.argv)>2 and sys.argv[2]=='-n': return
+    fdb=ifdb.Fdb(s)
+    ftrns=ftrn.expandsensor(s,fdb).maplab(labmap)
+    ftsts=ftst.expandsensor(s,fdb).maplab(labmap)
+    for typ in ['sig','pfa']: fdb.analyse(typ,eval(typ+'get'))
+    sfaget(ftrns,ftsts,fdb)
+    fdb.save()
+    if not regression: ftrns.equalcls()
+    if '-n' in sys.argv: return
 
     for cls in clsuse:
         for fea in feause:

@@ -133,9 +133,9 @@ def dnnrnd_allsen():
         np.save(fnx,statx)
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
-icfg.Cfg(sys.argv[1])
+icfg.Cfg(*sys.argv[1:])
 
-if len(sys.argv)>2 and sys.argv[2]=='-nn': raise SystemExit()
+if '-nn' in sys.argv: raise SystemExit()
 
 print("flst")
 ftrn=icfg.readflst('train')
@@ -147,78 +147,50 @@ dlog=icfg.getdir('log')
 dsig=icfg.getdir('sig')
 sigext='.'+icfg.get('sig.ext','wav')
 sen=getsensors()
-senuse=sen#[:1]
 
-if True:
-    ftrns={}
-    for strn in senuse:
-        ftrns[strn]=[]
-        for f in ftrn:
-            for s in sen:
-                fn={**f}
-                fn['fn']+='.'+s
-                if strn!=s: fn['lab']='Zxx'
-                else: fn['lab']='Z00'
-                ftrns[strn].append(fn)
-        ftrns[strn]=icls.equalcls(ftrns[strn])
-    ftsts={}
-    for s in senuse:
-        ftsts[s]=[]
-        for f in ftst:
-            fn={**f}
-            fn['fn']+='.'+s
-            ftsts[s].append(fn)
 
-if not 'fdb' in locals(): fdb = ifdb.load() if senuse==sen else {}
+senuse=sen
+feause=['pfa','sfa','sig']
+clsuse=['hmm','svm']
+if not icfg.get('senuse') is None: senuse=icfg.get('senuse').split(',')
+if not icfg.get('feause') is None: feause=icfg.get('feause').split(',')
+if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
 
-for flst in [*ftsts.values(),*ftrns.values()]:
-    for f in flst:
-        if not f['fn'] in fdb: fdb[f['fn']]={'fn':f['fn']}
+maxjobs=16
 
-thr=ijob.Thr(16)
-fdb_chg=False
+# Generate ftrns & ftsts for universal background model
+ftrns={}
+for strn in senuse:
+    ftrns[strn]=[]
+    ftrns[strn]=ftrn.expandsensor(sen)
+    for f in ftrns[strn]: f['lab']='Z00' if f['sen']==strn else 'Zxx'
+    ftrns[strn].equalcls()
+ftsts={s:ftst.expandsensor(s) for s in senuse}
+
+if not 'fdb' in locals(): fdb = ifdb.Fdb()
 for typ in ['sig','pfa']:
     print(typ)
-    do=[f for f in fdb.values() if not typ in f]
-    if len(do)==0: continue
-    fdb_chg=True
-    fnc=eval(typ+'get')
-
-#    t=time.time()
-#    for i in range(len(do)):
-#        if time.time()-t>5:
-#            print("%s %i/%i"%(typ,i,len(do)))
-#            t=time.time()
-#        fnc([do[i]])
-
-    for i in range(0,len(do),1000):
-        if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
-        print('%s start  %i/%i'%(typ,i,len(do)))
-        thr.start('%s_%i'%(typ,i),fnc,(do[i:min(i+1000,len(do))],))
-    for i in range(0,len(do),1000): thr.res('%s_%i'%(typ,i))
-
-if senuse==sen and fdb_chg: ifdb.save(fdb)
-
-print("fealnk")
-fealnk(list(itertools.chain.from_iterable(ftrns.values())),fdb)
-fealnk(list(itertools.chain.from_iterable(ftsts.values())),fdb)
+    fdb.analyse(typ,eval(typ+'get'),flst=sum(ftrns.values(),[])+sum(ftsts.values(),[]),jobs=maxjobs)
+fdb.save()
 
 print('sfa')
-do=[s for s in senuse if len([True for f in ftrns[s]+ftsts[s] if not 'sfa' in f])!=0]
+do=set(s for s in senuse if any(not 'sfa' in f for f in ftrns[s]+ftsts[s]))
+thr=ijob.Thr(maxjobs)
 for s in do:
     if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
     print('sfa start  '+s)
-    thr.start('sfa_'+s,sfaget,(ftrns[s],ftsts[s]))
+    thr.start('sfa_'+s,sfaget,(ftrns[s],ftsts[s],fdb))
 for s in do: thr.res('sfa_'+s)
 
-if len(sys.argv)>2 and sys.argv[2]=='-n': raise SystemExit()
+if '-n' in sys.argv: raise SystemExit()
 #dnnrndloop()
 #raise SystemExit()
 
-for cls in ['hmm','svm']:
-    for fea in ['sig','pfa','sfa']:
+for cls in clsuse:
+    for fea in feause:
         if cls=='hmm' and ftrns[sen[0]][0][fea].shape[-1]>40: continue
         probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
+        print(probfn)
         if os.path.exists(probfn): continue
         kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))
         if kwargs is None: kwargs={}
@@ -227,10 +199,10 @@ for cls in ['hmm','svm']:
             kwargs=eval(kwargs)
         job=ijob.Job(22 if cls!='dnn' else 1)
         fnctrn=eval(cls+'trn')
-        for s in sen:
+        for s in senuse:
             if os.path.exists('stop'): job.cleanup(); raise SystemExit()
             job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
-        prob=[job.res(cls+'trn_'+s) for s in sen]
+        prob=[job.res(cls+'trn_'+s) for s in senuse]
         np.save(probfn,prob)
 
 #x=dnntest('A1A2','sig',max_iter=200,lay=[('conv',[7,1],20,[5,1]),('ip',200),('dropout',0.5),('relu',),('ip',)])
