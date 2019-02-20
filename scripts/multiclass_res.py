@@ -13,6 +13,7 @@ import icfg
 import icls
 import ihelp
 import idat
+import ihlp
 import ilinreg
 from ihelp import *
 importlib.reload(ipl)
@@ -54,7 +55,6 @@ if sys.argv[1]=='csv':
 icfg.Cfg(sys.argv[1])
 ocsv=len(sys.argv)>2 and sys.argv[2]=='csv'
 if ocsv: sys.argv.remove('csv')
-fns=sys.argv[2:]
 
 ftst=icfg.readflst('test')
 ftrn=icfg.readflst('train')
@@ -62,23 +62,18 @@ dlog=icfg.getdir('log')
 sen=getsensors()
 regression=icfg.get('trn.regression')==True
 
-okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00'
-for f in ftst:
-    if re.match(okpat,f['lab']): f['lab']='Z00'
+labmap={}
+if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
+ftst.maplab(labmap)
+lcls=np.array(icls.getcls(ftst))
 
-lab=ihelp.rle([f['lab'] for f in ftst])
-labs=np.array([l[2] for l in lab])
-
-fns=argv2resfns('res_',fns)
-
-lcls=icls.getcls(ftst)
 if regression:
     icls.labf(ftst)
     lab=np.array([f['labf'] for f in ftst])
     lfcls=[i[-1] for i in rle(sorted(lab))]
 
 resh={}
-for fn in fns:
+for fn in argv2resfns('res_',sys.argv[2:]):
     if fn.find('_trn.npy')>=0 or fn.find('.model')>=0: continue
     cls,fea,s=os.path.basename(fn)[4:-4].split('_')
     res=np.load(fn)
@@ -89,7 +84,7 @@ for fn in fns:
         h['c']=0
     else:
         if cls=='hmm': res=-res
-        h['resc']=resc=labs[res.argmax(axis=-1)]
+        h['resc']=resc=lcls[res.argmax(axis=-1)]
         h['c']=np.sum(resc==[f['lab'] for f in ftst])/len(ftst)
     if not cls in resh: resh[cls]={}
     if not fea in resh[cls]: resh[cls][fea]={}
@@ -131,7 +126,7 @@ for fea in feas:
             acor=cor(mres,lab)
             amse=mse(mres,lab)
             lmse=[mse(mres[lab==l],l) for l in lfcls]
-            eer,cm=icls.eer(1-mres,flst=ftst,okpat=okpat)
+            eer,cm=icls.eer(1-mres,flst=ftst,okpat='Z00')
             print('%s %-7s [%3i/%3i] MEAN cor: %.3f mse: %5.2f max-mse: %5.2f/%s Z00/1-mse: %5.2f, %5.2f EER: %6.2f%% CM: %6.2f%%'%(
                 fea,cls,len(resh[cls][fea]),len(sen),
                 acor,amse,np.max(lmse),lcls[np.argmax(lmse)],*lmse[:2],
@@ -152,7 +147,7 @@ for fea in feas:
             cmax=np.max(c)
             smax=np.array(s)[np.argmax(c)]
             res=np.mean(res,axis=0)
-            resc=labs[res.argmax(axis=-1)]
+            resc=lcls[res.argmax(axis=-1)]
             cmix=np.sum(resc==[f['lab'] for f in ftst])/len(ftst)
             if cmix<1:
                 cmx={}
