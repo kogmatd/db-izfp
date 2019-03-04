@@ -1,6 +1,6 @@
 ##### Database for airplane materials #####
 
-Description of signal aquisition, see 2018_ndt_aero/We_6_A_5_Duckhorn.pptx
+Description of signal acquisition, see 2018_ndt_aero/We_6_A_5_Duckhorn.pptx
     Aluminum plate: Directory als/
     CFRP plate
         Ricker wavelet 100kHz: Directory cfk/X1*
@@ -8,12 +8,12 @@ Description of signal aquisition, see 2018_ndt_aero/We_6_A_5_Duckhorn.pptx
         Sinc 600kHz: Directory cfk/X3*
 
 All following training commands support selection of what is done with the options:
-    -Psenuse=SENUSE where SENUSE is a comma seperated list of sensors (A1A2,A1B1,A1B2,...,D1D2 for als and ...,F1F2 for cfk)
-    -Pfeause=FEAUSE where FEAUSE is a comma seperated list of features:
+    -Psenuse=SENUSE where SENUSE is a comma separated list of sensors (A1A2,A1B1,A1B2,...,D1D2 for als and ...,F1F2 for cfk)
+    -Pfeause=FEAUSE where FEAUSE is a comma separated list of features:
         sig: Raw signals
         pfa: Primary feature analysis
         sfa: Secondary feature analysis
-    -Pclsuse=CLSUSE where CLSUSE is a comma seperated list of classifiers: hmm,svm,dnn,cnn,cnnb
+    -Pclsuse=CLSUSE where CLSUSE is a comma separated list of classifiers: hmm,svm,dnn,cnn,cnnb
 
 ##### Multiclass training and evaluation #####
 
@@ -60,7 +60,7 @@ The following result values are printed:
   classifier-type
   [number of sensors with results]
   mse NN:          Mean square error for mean result of all sensors
-  max-mse: NN/SEN: Mean square error of sensor SEN with the highes mean square error
+  max-mse: NN/SEN: Mean square error of sensor SEN with the highest mean square error
   Z00/1-mse NN,NN: Mean square error of Z00 and Z01
   EER:             Equal error rate for mean result of all sensors
   CM:              classification safety margin
@@ -69,7 +69,7 @@ The following result values are printed:
 
 The following commands will train a oneclass detector for good state Z00.
 The signals of not Z00 states are only used for evaluation.
-For classifiers which neeed at least two classes for training it uses the Z00 data
+For classifiers which need at least two classes for training it uses the Z00 data
 of all other sensors but the current one as universal background model.
 The evaluation results will be saved as likelihood matrix with a likelihood for class Z00 and each file
 and each sensor in the log directory.
