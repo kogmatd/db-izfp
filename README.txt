@@ -7,6 +7,9 @@ Description of signal acquisition, see 2018_ndt_aero/We_6_A_5_Duckhorn.pptx
         Ricker wavelet 350kHz: Directory cfk/X2*
         Sinc 600kHz: Directory cfk/X3*
 
+The signals you can find under:
+	S:\Ablage_IKTS-340\_Projekte\Projekte_ohne_PN\345-DBs\uasr-data\izfp
+
 All following training commands support selection of what is done with the options:
     -Psenuse=SENUSE where SENUSE is a comma separated list of sensors (A1A2,A1B1,A1B2,...,D1D2 for als and ...,F1F2 for cfk)
     -Pfeause=FEAUSE where FEAUSE is a comma separated list of features:
