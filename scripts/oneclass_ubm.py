@@ -204,7 +204,7 @@ for cls in clsuse:
                 if os.path.exists('stop'): job.cleanup(); raise SystemExit()
                 job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
             prob=[job.res(cls+'trn_'+s) for s in senuse]
-        np.save(probfn,prob)
+        if senuse==sen: np.save(probfn,prob)
 
 #x=dnntest('A1A2','sig',max_iter=200,lay=[('conv',[7,1],20,[5,1]),('ip',200),('dropout',0.5),('relu',),('ip',)])
 #x=dnntest('A1A2','pfa',max_iter=200,lay=[('ip',20),('relu',),('ip',)],weight_decay=0.1)
