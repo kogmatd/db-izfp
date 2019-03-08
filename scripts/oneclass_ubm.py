@@ -196,12 +196,14 @@ for cls in clsuse:
         else:
             print('trnargs = '+kwargs)
             kwargs=eval(kwargs)
-        job=ijob.Job(22 if cls!='dnn' else 1)
         fnctrn=eval(cls+'trn')
-        for s in senuse:
-            if os.path.exists('stop'): job.cleanup(); raise SystemExit()
-            job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
-        prob=[job.res(cls+'trn_'+s) for s in senuse]
+        if len(senuse)==1: prob=fnctrn(ftrns[senuse[0]],ftsts[senuse[0]],fea,senuse[0],kwargs)
+        else:
+            job=ijob.Job(22 if cls!='dnn' else 1)
+            for s in senuse:
+                if os.path.exists('stop'): job.cleanup(); raise SystemExit()
+                job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
+            prob=[job.res(cls+'trn_'+s) for s in senuse]
         np.save(probfn,prob)
 
 #x=dnntest('A1A2','sig',max_iter=200,lay=[('conv',[7,1],20,[5,1]),('ip',200),('dropout',0.5),('relu',),('ip',)])
