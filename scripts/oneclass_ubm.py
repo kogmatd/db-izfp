@@ -168,6 +168,7 @@ for strn in senuse:
 ftsts={s:ftst.expandsensor(s) for s in senuse}
 
 if not 'fdb' in locals(): fdb = ifdb.Fdb()
+else: fdb.chg=False
 for typ in ['sig','pfa']:
     print(typ)
     fdb.analyse(typ,eval(typ+'get'),flst=sum(ftrns.values(),[])+sum(ftsts.values(),[]),jobs=maxjobs)
@@ -175,12 +176,14 @@ fdb.save()
 
 print('sfa')
 do=set(s for s in senuse if any(not 'sfa' in f for f in ftrns[s]+ftsts[s]))
-thr=ijob.Thr(maxjobs)
-for s in do:
-    if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
-    print('sfa start  '+s)
-    thr.start('sfa_'+s,sfaget,(ftrns[s],ftsts[s],fdb))
-for s in do: thr.res('sfa_'+s)
+if len(do)==1 or maxjobs==1: sfaget(ftrns[do[0]],ftsts[do[0]],fdb)
+else:
+    thr=ijob.Thr(maxjobs)
+    for s in do:
+        if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
+        print('sfa start  '+s)
+        thr.start('sfa_'+s,sfaget,(ftrns[s],ftsts[s],fdb))
+    for s in do: thr.res('sfa_'+s)
 
 if '-n' in sys.argv: raise SystemExit()
 #dnnrndloop()
@@ -197,7 +200,7 @@ for cls in clsuse:
             print('trnargs = '+kwargs)
             kwargs=eval(kwargs)
         fnctrn=eval(cls+'trn')
-        if len(senuse)==1: prob=fnctrn(ftrns[senuse[0]],ftsts[senuse[0]],fea,senuse[0],kwargs)
+        if len(senuse)==1 or maxjobs==1: prob=fnctrn(ftrns[senuse[0]],ftsts[senuse[0]],fea,senuse[0],kwargs)
         else:
             job=ijob.Job(22 if cls!='dnn' else 1)
             for s in senuse:
