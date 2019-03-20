@@ -204,7 +204,7 @@ for cls in clsuse:
             kwargs=eval(kwargs)
         fnctrn=eval(cls+'trn')
         if len(senuse)==1 or maxjobs==1:
-            for s in senuse: prob=fnctrn(ftrns[s],ftsts[s],fea,s,kwargs)
+            prob=[fnctrn(ftrns[s],ftsts[s],fea,s,kwargs) for s in senuse]
         else:
             job=ijob.Job(22 if cls!='dnn' else 1)
             for s in senuse:
