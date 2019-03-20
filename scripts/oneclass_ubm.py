@@ -176,7 +176,8 @@ fdb.save()
 
 print('sfa')
 do=set(s for s in senuse if any(not 'sfa' in f for f in ftrns[s]+ftsts[s]))
-if len(do)==1 or maxjobs==1: sfaget(ftrns[do[0]],ftsts[do[0]],fdb)
+if len(do)==1 or maxjobs==1:
+    for s in do: sfaget(ftrns[s],ftsts[s],fdb)
 else:
     thr=ijob.Thr(maxjobs)
     for s in do:
@@ -189,6 +190,8 @@ if '-n' in sys.argv: raise SystemExit()
 #dnnrndloop()
 #raise SystemExit()
 
+#maxjobs=1
+print('cls')
 for cls in clsuse:
     for fea in feause:
         if cls=='hmm' and ftrns[sen[0]][0][fea].shape[-1]>40: continue
@@ -200,7 +203,8 @@ for cls in clsuse:
             print('trnargs = '+kwargs)
             kwargs=eval(kwargs)
         fnctrn=eval(cls+'trn')
-        if len(senuse)==1 or maxjobs==1: prob=fnctrn(ftrns[senuse[0]],ftsts[senuse[0]],fea,senuse[0],kwargs)
+        if len(senuse)==1 or maxjobs==1:
+            for s in senuse: prob=fnctrn(ftrns[s],ftsts[s],fea,s,kwargs)
         else:
             job=ijob.Job(22 if cls!='dnn' else 1)
             for s in senuse:
