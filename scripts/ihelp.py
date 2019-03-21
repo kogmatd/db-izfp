@@ -7,6 +7,7 @@ import isig
 import ifea
 import icls
 import ipl
+import ihlp
 
 def argv2resfns(pat,fns):
     dlog=icfg.getdir('log')
@@ -54,7 +55,7 @@ def sfaget(ftrn,ftst,fdb):
 
 def plt_clsmeanstd(res,flst,**kwargs):
     icls.labf(flst)
-    lab=rle([f['labf'] for f in flst])
+    lab=ihlp.rle([f['labf'] for f in flst])
     reslab=[(l[2],res.take(range(l[0],l[0]+l[1]),axis=-1)) for l in lab]
     reslab=[(l,r.reshape(-1,r.shape[-1])) for (l,r) in reslab]
     resmean=[[(l,np.mean(r[i]),np.std(r[i])) for (l,r) in reslab] for i in range(reslab[0][1].shape[0])]
