@@ -12,10 +12,6 @@ import idlabpro
 import icfg
 import icls
 import ipl
-importlib.reload(icfg)
-importlib.reload(icls)
-importlib.reload(ipl)
-importlib.reload(idlabpro)
 
 def loadass():
     dlog=icfg.getdir('log')

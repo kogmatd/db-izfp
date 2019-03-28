@@ -13,10 +13,6 @@ import icfg
 import icls
 import ihelp
 from ihelp import *
-importlib.reload(ipl)
-importlib.reload(icfg)
-importlib.reload(icls)
-importlib.reload(ihelp)
 
 def plot_roc(ftst,nld):
     okpat='Z00'

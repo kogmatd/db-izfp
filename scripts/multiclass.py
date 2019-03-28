@@ -22,18 +22,6 @@ import ijob
 import ifdb
 import ihelp
 from ihelp import *
-importlib.reload(ipl)
-importlib.reload(isig)
-importlib.reload(ifea)
-importlib.reload(icfg)
-importlib.reload(isvm)
-importlib.reload(ihmm)
-importlib.reload(idnn)
-importlib.reload(icls)
-importlib.reload(idat)
-importlib.reload(ijob)
-importlib.reload(ifdb)
-importlib.reload(ihelp)
 icnn=idnn
 
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):

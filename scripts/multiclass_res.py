@@ -16,12 +16,6 @@ import idat
 import ihlp
 import ilinreg
 from ihelp import *
-importlib.reload(ipl)
-importlib.reload(icfg)
-importlib.reload(icls)
-importlib.reload(ihelp)
-importlib.reload(idat)
-importlib.reload(ilinreg)
 
 def cor(x,y):
     a=x-np.mean(x)

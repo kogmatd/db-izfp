@@ -10,9 +10,6 @@ sys.path.append(os.environ['UASR_HOME']+'-py')
 import ipl
 import icfg
 import idnn
-importlib.reload(ipl)
-importlib.reload(icfg)
-importlib.reload(idnn)
 
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" CFG {PAR}")
 icfg.Cfg(sys.argv[1])
