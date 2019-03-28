@@ -194,7 +194,7 @@ for cls in clsuse:
         if len(senuse)==1 or maxjobs==1 or cls=='dnn':
             prob=[fnctrn(ftrns[s],ftsts[s],fea,s,kwargs) for s in senuse]
         else:
-            job=ijob.Job(maxjobs)
+            job=ijob.Thr(maxjobs)
             for s in senuse:
                 if os.path.exists('stop'): job.cleanup(); raise SystemExit()
                 job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
