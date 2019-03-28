@@ -23,18 +23,6 @@ import ijob
 import ifdb
 import ihelp
 from ihelp import *
-importlib.reload(ipl)
-importlib.reload(isig)
-importlib.reload(ifea)
-importlib.reload(icfg)
-importlib.reload(isvm)
-importlib.reload(ihmm)
-importlib.reload(idnn)
-importlib.reload(icls)
-importlib.reload(idat)
-importlib.reload(ijob)
-importlib.reload(ifdb)
-importlib.reload(ihelp)
 
 def prtres(prob,flst):
     eer,cm=icls.eer(prob,flst=flst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
