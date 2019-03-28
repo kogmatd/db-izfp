@@ -203,10 +203,10 @@ for cls in clsuse:
             print('trnargs = '+kwargs)
             kwargs=eval(kwargs)
         fnctrn=eval(cls+'trn')
-        if len(senuse)==1 or maxjobs==1:
+        if len(senuse)==1 or maxjobs==1 or cls=='dnn':
             prob=[fnctrn(ftrns[s],ftsts[s],fea,s,kwargs) for s in senuse]
         else:
-            job=ijob.Job(22 if cls!='dnn' else 1)
+            job=ijob.Job(maxjobs)
             for s in senuse:
                 if os.path.exists('stop'): job.cleanup(); raise SystemExit()
                 job.start(cls+'trn_'+s,fnctrn,(ftrns[s],ftsts[s],fea,s,kwargs))
