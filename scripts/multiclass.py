@@ -65,7 +65,7 @@ def dnntest(s,fea='sfa',**kwargs):
     fdb=ifdb.load(s)
     ftrns=ftrn.expandsensor(s,fdb).maplab(labmap)
     ftsts=ftst.expandsensor(s,fdb).maplab(labmap)
-    if icfg.get('trn.regression')!=True: ftrns.equalcls()
+    if icfg.get('trn.regression')!=True: ftrns=ftrns.equalcls()
     cdnn=idnn.trn(ftrns,ftsts,fea=fea,dmod=dmod,verbose=True,**kwargs)
     if not cdnn is None: cdnn['idim']=ftrns[0][fea].shape
     return cdnn
@@ -146,7 +146,7 @@ def run_sen(s):
     for typ in ['sig','pfa']: fdb.analyse(typ,eval(typ+'get'))
     sfaget(ftrns,ftsts,fdb)
     fdb.save()
-    if not regression: ftrns.equalcls()
+    if not regression: ftrns=ftrns.equalcls()
     if '-n' in sys.argv: return
 
     for cls in clsuse:

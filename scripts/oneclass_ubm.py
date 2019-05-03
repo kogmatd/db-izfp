@@ -152,7 +152,7 @@ for strn in senuse:
     ftrns[strn]=[]
     ftrns[strn]=ftrn.expandsensor(sen)
     for f in ftrns[strn]: f['lab']='Z00' if f['sen']==strn else 'Zxx'
-    ftrns[strn].equalcls()
+    ftrns[strn]=ftrns[strn].equalcls()
 ftsts={s:ftst.expandsensor(s) for s in senuse}
 
 if not 'fdb' in locals(): fdb = ifdb.Fdb()
