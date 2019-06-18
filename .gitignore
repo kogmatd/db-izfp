@@ -8,3 +8,4 @@ model
 .*.swo
 __pycache__
 info.txt
+.idea

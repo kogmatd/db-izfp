@@ -13,9 +13,10 @@ import ipl
 import isig
 import ifea
 import icfg
-import isvm
+import imodsvm
 import ihmm
 import idnn
+import imodkeras
 import icls
 import idat
 import ijob
@@ -26,9 +27,9 @@ icnn=idnn
 
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
-    csvm=isvm.trn(ftrn,fea,**kwargs)
-    restrn=isvm.evlp(csvm,ftrn,fea)
-    restst=isvm.evlp(csvm,ftst,fea)
+    csvm=imodsvm.ModSVM.trn(ftrn,fea,**kwargs)
+    restrn=imodsvm.ModSVM.evl(csvm,ftrn,fea)
+    restst=imodsvm.ModSVM.evl(csvm,ftst,fea)
     print('svm finish '+fea+'_'+s)
     return (csvm,restrn,restst)
 
@@ -43,6 +44,14 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
         res=np.array(chmm['cls'])[nldtst.argmin(axis=1)]
         icls.cmp(ftst,res,'hmm finish '+fea+'_'+s)
     return (chmm,nldtrn,nldtst)
+
+def ktftrn(ftrn,ftst,fea,s,kwargs={}):
+    print('dnn start  '+s)
+    ktf = imodkeras.ModKeras()
+    ktf.trn(ftrn, fea)
+    ktf.evl(ftst, fea)
+    print('dnn stop  ' + s)
+    return None
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+fea+'_'+s)
@@ -125,7 +134,7 @@ regression=icfg.get('trn.regression')==True
 
 senuse=sen
 feause=['pfa','sfa','sig']
-clsuse=['hmm','svm','cnnb','cnn','dnn']
+clsuse=['hmm','svm','cnnb','cnn','dnn','keras']
 if not icfg.get('senuse') is None: senuse=icfg.get('senuse').split(',')
 if not icfg.get('feause') is None: feause=icfg.get('feause').split(',')
 if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
