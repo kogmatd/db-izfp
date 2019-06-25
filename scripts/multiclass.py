@@ -16,7 +16,7 @@ import icfg
 import imodsvm
 import ihmm
 import idnn
-import imodkeras
+import iktf
 import icls
 import idat
 import ijob
@@ -25,13 +25,22 @@ import ihelp
 from ihelp import *
 icnn=idnn
 
+#def svmtrn(ftrn,ftst,fea,s,kwargs={}):
+#    print('svm start  '+fea+'_'+s)
+#    csvm=imodsvm.ModSVM.trn(ftrn,fea,**kwargs)
+#    restrn=imodsvm.ModSVM.evl(csvm,ftrn,fea)
+#    restst=imodsvm.ModSVM.evl(csvm,ftst,fea)
+#    print('svm finish '+fea+'_'+s)
+#    return (csvm,restrn,restst)
+
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
-    csvm=imodsvm.ModSVM.trn(ftrn,fea,**kwargs)
-    restrn=imodsvm.ModSVM.evl(csvm,ftrn,fea)
-    restst=imodsvm.ModSVM.evl(csvm,ftst,fea)
+    svmcls=imodsvm.ModSVM()
+    svmcls.trn(ftrn,fea)
+    svmcls.evl(ftrn,fea)
+    svmcls.evl(ftst,fea)
     print('svm finish '+fea+'_'+s)
-    return (csvm,restrn,restst)
+    return None
 
 def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm start  '+fea+'_'+s)
@@ -47,11 +56,12 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def ktftrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
-    ktf = imodkeras.ModKeras()
+    ktf = iktf.ModKeras()
     ktf.trn(ftrn, fea)
-    ktf.evl(ftst, fea)
+    restrn=ktf.evl(ftrn, fea, prob=True)
+    restst=ktf.evl(ftst, fea, prob=True)
     print('dnn stop  ' + s)
-    return None
+    return (ktf.mod,restrn,restst)
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+fea+'_'+s)
