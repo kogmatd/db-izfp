@@ -13,7 +13,8 @@ import ipl
 import isig
 import ifea
 import icfg
-import imodsvm
+import isvm
+#import imodsvm
 import ihmm
 import idnn
 import iktf
@@ -25,22 +26,22 @@ import ihelp
 from ihelp import *
 icnn=idnn
 
-#def svmtrn(ftrn,ftst,fea,s,kwargs={}):
-#    print('svm start  '+fea+'_'+s)
-#    csvm=imodsvm.ModSVM.trn(ftrn,fea,**kwargs)
-#    restrn=imodsvm.ModSVM.evl(csvm,ftrn,fea)
-#    restst=imodsvm.ModSVM.evl(csvm,ftst,fea)
-#    print('svm finish '+fea+'_'+s)
-#    return (csvm,restrn,restst)
-
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
-    svmcls=imodsvm.ModSVM()
-    svmcls.trn(ftrn,fea)
-    svmcls.evl(ftrn,fea)
-    svmcls.evl(ftst,fea)
+    csvm=isvm.trn(ftrn, fea, **kwargs)
+    restrn=isvm.evl(csvm, ftrn, fea)
+    restst=isvm.evl(csvm, ftst, fea)
     print('svm finish '+fea+'_'+s)
-    return None
+    return (csvm,restrn,restst)
+
+#def svmtrn(ftrn,ftst,fea,s,kwargs={}):
+#    print('svm start  '+fea+'_'+s)
+#    svmcls=imodsvm.ModSVM()
+#    svmcls.trn(ftrn,fea)
+#    svmcls.evl(ftrn,fea)
+#    svmcls.evl(ftst,fea)
+#    print('svm finish '+fea+'_'+s)
+#    return None
 
 def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm start  '+fea+'_'+s)
