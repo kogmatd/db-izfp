@@ -57,6 +57,9 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def ktftrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
+    config = dict()
+    config['batchsize'] = 100
+    config['lay'] = [('relu',600),('batch',), ('dropout',0.5), ('relu',300),('batch',),('dropout',0.5)]
     ktf = iktf.ModKeras()
     ktf.trn(ftrn, fea)
     restrn=ktf.evl(ftrn, fea, prob=True)
