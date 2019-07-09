@@ -167,7 +167,7 @@ do=set(s for s in senuse if any(not 'sfa' in f for f in ftrns[s]+ftsts[s]))
 if len(do)==1 or maxjobs==1:
     for s in do: sfaget(ftrns[s],ftsts[s],fdb)
 else:
-    thr=ijob.Job(maxjobs)
+    thr=ijob.Thr(maxjobs)
     for s in do:
         if os.path.exists('stop'): thr.cleanup(); raise SystemExit()
         print('sfa start  '+s)
