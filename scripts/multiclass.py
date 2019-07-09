@@ -31,6 +31,9 @@ def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     csvm=isvm.trn(ftrn, fea, **kwargs)
     restrn=isvm.evl(csvm, ftrn, fea)
     restst=isvm.evl(csvm, ftst, fea)
+    if not regression:
+        icls.cmp(ftrn, restrn, 'svm finish ')
+        icls.cmp(ftst, restst, 'svm finish ')
     print('svm finish '+fea+'_'+s)
     return (csvm,restrn,restst)
 
@@ -51,8 +54,10 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
         print('hmm finish '+fea+'_'+s)
     else:
-        res=np.array(chmm['cls'])[nldtst.argmin(axis=1)]
-        icls.cmp(ftst,res,'hmm finish '+fea+'_'+s)
+        restrn=np.array(chmm['cls'])[nldtrn.argmin(axis=1)]
+        icls.cmp(ftrn,restrn,'hmm finish '+fea+'_'+s)
+        restst = np.array(chmm['cls'])[nldtst.argmin(axis=1)]
+        icls.cmp(ftst, restst, 'hmm finish ' + fea + '_' + s)
     return (chmm,nldtrn,nldtst)
 
 def ktftrn(ftrn,ftst,fea,s,kwargs={}):
