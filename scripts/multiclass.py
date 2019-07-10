@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
+import numpy as np
 import os
 import sys
 import re
 import time
 import importlib
-import numpy as np
 
 sys.path.append(os.environ['UASR_HOME']+'-py')
 

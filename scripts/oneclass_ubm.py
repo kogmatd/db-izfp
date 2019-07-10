@@ -1,12 +1,11 @@
 #!/usr/bin/python3
-
 import os
+import numpy as np
 import sys
 import re
 import time
 import itertools
 import importlib
-import numpy as np
 
 sys.path.append(os.environ['UASR_HOME']+'-py')
 
@@ -26,7 +25,7 @@ import ihelp
 from ihelp import *
 
 def prtres(prob,flst):
-    eer,cm=icls.eer(prob,flst=flst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
+    eer,cm = icls.eer(prob,flst=flst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
     return 'EER: %6.2f%% CM: %6.2f%%'%(eer*100,cm*100)
 
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
@@ -49,12 +48,14 @@ def ktftrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
     config = dict()
     config['batchsize'] = 32
-    config['epochs'] = 30
+    config['epochs'] = 10
     config['lay'] = [('relu',300),('batch',), ('dropout',0.5), ('relu',100),('batch',),('dropout',0.5)]
     ktf = iktf.ModKeras(**config)
     ktf.trn(ftrn, fea)
     #restrn=ktf.evl(ftrn, fea, prob=True)
     prob = ktf.evl(ftst, fea, prob=True)[:,0]
+    # probability of class 0
+    prob = 1-prob
     print('ktf stop  '+s+' '+prtres(prob, ftst))
     return prob
 
@@ -150,7 +151,6 @@ dsig=icfg.getdir('sig')
 sigext='.'+icfg.get('sig.ext','wav')
 sen=getsensors()
 
-
 senuse=sen
 feause=['pfa','sfa','sig']
 clsuse=['hmm','svm']
@@ -163,17 +163,20 @@ maxjobs=16
 # Generate ftrns & ftsts for universal background model
 ftrns={}
 for strn in senuse:
-    ftrns[strn]=[]
-    ftrns[strn]=ftrn.expandsensor(sen)
+    ftrns[strn] = []
+    ftrns[strn] = ftrn.expandsensor(sen)
     for f in ftrns[strn]: f['lab']='Z00' if f['sen']==strn else 'Zxx'
-    ftrns[strn]=ftrns[strn].equalcls()
-ftsts={s:ftst.expandsensor(s) for s in senuse}
+    ftrns[strn] = ftrns[strn].equalcls()
+ftsts = {s: ftst.expandsensor(s) for s in senuse}
 
-if not 'fdb' in locals(): fdb = ifdb.Fdb()
-else: fdb.chg=False
+if not 'fdb' in locals():
+    fdb = ifdb.Fdb()
+else:
+    fdb.chg=False
+
 for typ in ['sig','pfa']:
     print(typ)
-    fdb.analyse(typ,eval(typ+'get'),flst=sum(ftrns.values(),[])+sum(ftsts.values(),[]),jobs=maxjobs)
+    fdb.analyse(typ, eval(typ+'get'), flst=sum(ftrns.values(),[])+sum(ftsts.values(),[]), jobs=maxjobs)
 fdb.save()
 
 print('sfa')
