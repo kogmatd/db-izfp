@@ -17,6 +17,7 @@ import icfg
 import isvm
 import ihmm
 import idnn
+import iktf
 import icls
 import idat
 import ijob
@@ -43,6 +44,19 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('hmm finish '+s+' '+prtres(prob,ftst))
     return np.concatenate((prob.reshape(-1,1),nld),axis=1)
     #return prob
+
+def ktftrn(ftrn,ftst,fea,s,kwargs={}):
+    print('dnn start  '+s)
+    config = dict()
+    config['batchsize'] = 32
+    config['epochs'] = 30
+    config['lay'] = [('relu',300),('batch',), ('dropout',0.5), ('relu',100),('batch',),('dropout',0.5)]
+    ktf = iktf.ModKeras(**config)
+    ktf.trn(ftrn, fea)
+    #restrn=ktf.evl(ftrn, fea, prob=True)
+    prob = ktf.evl(ftst, fea, prob=True)[:,0]
+    print('ktf stop  '+s+' '+prtres(prob, ftst))
+    return prob
 
 def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
@@ -191,7 +205,7 @@ for cls in clsuse:
             print('trnargs = '+kwargs)
             kwargs=eval(kwargs)
         fnctrn=eval(cls+'trn')
-        if len(senuse)==1 or maxjobs==1 or cls=='dnn':
+        if len(senuse)==1 or maxjobs==1 or cls=='dnn' or cls=='ktf':
             prob=[fnctrn(ftrns[s],ftsts[s],fea,s,kwargs) for s in senuse]
         else:
             job=ijob.Thr(maxjobs)

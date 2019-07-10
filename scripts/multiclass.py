@@ -63,9 +63,10 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 def ktftrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
     config = dict()
-    config['batchsize'] = 100
-    config['lay'] = [('relu',600),('batch',), ('dropout',0.5), ('relu',300),('batch',),('dropout',0.5)]
-    ktf = iktf.ModKeras()
+    config['batchsize'] = 64
+    config['epochs'] = 10
+    config['lay'] = [('relu',10),('batch',), ('dropout',0.5), ('relu',5),('batch',),('dropout',0.5)]
+    ktf = iktf.ModKeras(**config)
     ktf.trn(ftrn, fea)
     restrn=ktf.evl(ftrn, fea, prob=True)
     restst=ktf.evl(ftst, fea, prob=True)
@@ -153,7 +154,7 @@ regression=icfg.get('trn.regression')==True
 
 senuse=sen
 feause=['pfa','sfa','sig']
-clsuse=['hmm','svm','cnnb','cnn','dnn','keras']
+clsuse=['hmm','svm','cnnb','cnn','dnn','ktf']
 if not icfg.get('senuse') is None: senuse=icfg.get('senuse').split(',')
 if not icfg.get('feause') is None: feause=icfg.get('feause').split(',')
 if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
@@ -161,7 +162,7 @@ if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
 labmap={}
 if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
 
-maxjob=18
+maxjob=16
 
 if '-nn' in sys.argv: raise SystemExit()
 
@@ -181,7 +182,7 @@ def run_sen(s):
         for fea in feause:
             if cls=='hmm' and ftrns[0][fea].shape[-1]>40: continue
             resfn=os.path.join(dlog,'res_'+cls+'_'+fea+'_'+s+'.npy')
-            if os.path.exists(resfn): continue
+            #if os.path.exists(resfn): continue
             print('####################',fea,cls,s,'####################')
             kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))
             if kwargs is None:

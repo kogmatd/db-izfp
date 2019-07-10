@@ -10,12 +10,13 @@ sys.path.append(os.environ['UASR_HOME']+'-py')
 
 import ipl
 import icfg
-import icls
+import iflst
 import ihelp
 import idat
 import ihlp
 import ilinreg
 from ihelp import *
+from ihlp import *
 
 def cor(x,y):
     a=x-np.mean(x)
@@ -59,7 +60,7 @@ regression=icfg.get('trn.regression')==True
 labmap={}
 if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
 ftst.maplab(labmap)
-lcls=np.array(icls.getcls(ftst))
+lcls=np.array(ftst.getcls())
 
 if regression:
     icls.labf(ftst)
