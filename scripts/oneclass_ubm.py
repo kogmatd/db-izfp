@@ -199,7 +199,7 @@ if '-n' in sys.argv: raise SystemExit()
 print('cls')
 for cls in clsuse:
     for fea in feause:
-        if cls=='hmm' and ftrns[sen[0]][0][fea].shape[-1]>40: continue
+        if cls=='hmm' and ftrns[senuse[0]][0][fea].shape[-1]>40: continue
         probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
         if os.path.exists(probfn): continue
         kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))
