@@ -165,7 +165,7 @@ ftrns={}
 for strn in senuse:
     ftrns[strn] = []
     ftrns[strn] = ftrn.expandsensor(sen)
-    for f in ftrns[strn]: f['lab']='Z00' if f['sen']==strn else 'Zxx'
+    for f in ftrns[strn]: f['lab'] = 'Z00' if f['sen']==strn else 'Zxx'
     ftrns[strn] = ftrns[strn].equalcls()
 ftsts = {s: ftst.expandsensor(s) for s in senuse}
 
@@ -199,7 +199,7 @@ if '-n' in sys.argv: raise SystemExit()
 print('cls')
 for cls in clsuse:
     for fea in feause:
-        if cls=='hmm' and ftrns[senuse[0]][0][fea].shape[-1]>40: continue
+        if cls=='hmm' and ftrns[0][fea].shape[-1]>40: continue
         probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
         if os.path.exists(probfn): continue
         kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))

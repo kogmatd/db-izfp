@@ -34,18 +34,32 @@ def getsensors():
         if len(line)>0: sen.append(line)
     return sen
 
+def getlabmaps():
+    fn=icfg.getfile('lab.map','info','labmap.txt')
+    if fn is None: return None
+    labmap={}
+    with open(fn) as fd:
+        rows = (re.sub('#.*|\n|\r|^[ \t]+|[ \t]+$', '', line).split('\t') for line in fd)
+        for row in rows :
+            if row[0]!='':
+                labmap[row[0]]=row[1]
+    return labmap
+
 def sigget(f):
     dsig=icfg.getdir('sig')
     sigext='.'+icfg.get('sig.ext','wav')
     sig=isig.load(os.path.join(dsig,f['fn']+sigext)).rmaxis()
     sig.inc=[1/icfg.get('sig.srate')]
     return sig
-
+  
 def pfaget(f):
     if not 'sig' in f: raise ValueError("feaget without sig for: "+f['fn'])
-    fea=ifea.fft(f['sig'],crate=icfg.get('pfa.crate'),wlen=icfg.get('pfa.wlen')).db()
-    ifea.cavg(fea,rat=4,inplace=True)
-    fea.sel(axis=len(fea.shape)-1,len=icfg.get('pfa.dim'),inplace=True)
+    if(icfg.get('pfa')=='UPFA') :
+        fea = ifea.pfa_upfa(f['sig'])
+    else:
+        fea = ifea.fft(f['sig'], crate=icfg.get('pfa.crate'), wlen=icfg.get('pfa.wlen')).db()
+        ifea.cavg(fea, rat=4, inplace=True)
+        fea.sel(axis=len(fea.shape)-1, len=icfg.get('pfa.dim'), inplace=True)
     return fea
 
 def sfaget(ftrn,ftst,fdb):

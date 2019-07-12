@@ -58,8 +58,10 @@ sen=getsensors()
 regression=icfg.get('trn.regression')==True
 
 labmap={}
-if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
-ftst.maplab(labmap)
+labmap=getlabmaps()
+if not icfg.get('labmap') is None: labmap=icfg.get('labmap'); labmap=eval(labmap)
+if labmap is not None:
+    ftst.maplab(labmap)
 lcls=np.array(ftst.getcls())
 
 if regression:
@@ -70,7 +72,7 @@ if regression:
 resh={}
 for fn in argv2resfns('res_',sys.argv[2:]):
     if fn.find('_trn.npy')>=0 or fn.find('.model')>=0: continue
-    cls,fea,s=os.path.basename(fn)[4:-4].split('_')
+    cls,fea,s,exp = os.path.basename(fn)[4:-4].split('_')
     res=np.load(fn)
     if res.shape==(0,): continue
     h={'res':res}

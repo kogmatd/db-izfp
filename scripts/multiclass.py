@@ -51,7 +51,8 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
     chmm=ihmm.trn(flst=ftrn,fea=fea,its=[0],states=3,**kwargs)
     nldtrn=ihmm.evlp(chmm,flst=ftrn,fea=fea)
     nldtst=ihmm.evlp(chmm,flst=ftst,fea=fea)
-    if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
+    #if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
+    if icfg.get('trn.regression') == True:
         print('hmm finish '+fea+'_'+s)
     else:
         restrn=np.array(chmm['cls'])[nldtrn.argmin(axis=1)]
@@ -62,11 +63,7 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def ktftrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
-    config = dict()
-    config['batchsize'] = 64
-    config['epochs'] = 10
-    config['lay'] = [('relu',10),('batch',), ('dropout',0.5), ('relu',5),('batch',),('dropout',0.5)]
-    ktf = iktf.ModKeras(**config)
+    ktf = iktf.ModKeras(**kwargs)
     ktf.trn(ftrn, fea)
     restrn=ktf.evl(ftrn, fea, prob=True)
     restst=ktf.evl(ftst, fea, prob=True)
@@ -82,7 +79,8 @@ def dnntrn(ftrn,ftst,fea,s,kwargs={}):
     else:
         restrn=idnn.evlp(cdnn,ftrn,fea=fea)
         restst=idnn.evlp(cdnn,ftst,fea=fea)
-        if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
+        #if icfg.get('exp')=='triclass' or icfg.get('trn.regression')==True:
+        if icfg.get('trn.regression') == True:
             print('dnn finish '+fea+'_'+s)
         else:
             res=np.array(cdnn['cls'])[prob.argmax(axis=1)]
@@ -160,21 +158,31 @@ if not icfg.get('feause') is None: feause=icfg.get('feause').split(',')
 if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
 
 labmap={}
-if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
+labmap=getlabmaps()
+if not icfg.get('labmap') is None: labmap=icfg.get('labmap'); labmap=eval(labmap)
+#if icfg.get('db')=='izfp/cfk': labmap={'Z0[0-2]':'Z00'}
 
 maxjob=16
 
 if '-nn' in sys.argv: raise SystemExit()
 
 def run_sen(s):
-
-    print("flst [%s]"%(s))
+    print("flst [%s]"%(s)) if s is not None else print("flst [%s]"%(icfg.get('db')))
     fdb=ifdb.Fdb(s)
-    ftrns=ftrn.expandsensor(s,fdb).maplab(labmap)
-    ftsts=ftst.expandsensor(s,fdb).maplab(labmap)
-    for typ in ['sig','pfa']: fdb.analyse(typ,eval(typ+'get'))
+    ftrns=ftrn
+    ftsts=ftst
+    if s is not None:
+        ftrns = ftrns.expandsensor(s, fdb)
+        ftsts = ftsts.expandsensor(s, fdb)
+    if labmap is not None:
+        ftrns=ftrns.maplab(labmap)
+        ftsts=ftsts.maplab(labmap)
+    for typ in ['sig','pfa']:
+        fdb.analyse(typ, eval(typ + 'get'), ftrns + ftsts)
     sfaget(ftrns,ftsts,fdb)
     fdb.save()
+
+    if s is None: s = icfg.get('db')
     if not regression: ftrns=ftrns.equalcls()
     if '-n' in sys.argv: return
 
@@ -195,19 +203,28 @@ def run_sen(s):
             fnctrn=eval(cls[:3]+'trn')
             for i in range(3):
                 (mod,restrn,restst)=fnctrn(ftrns,ftsts,fea,s,kwargs)
-                if len(restst)>0:
-                    np.save(resfn,restst)
-                    np.save(resfn[:-4]+'_trn.npy',restrn)
-                    eval('i'+cls[:3]+'.save')(mod,resfn[:-4]+'.model')
-                    break
 
-if len(senuse)==1: run_sen(senuse[0])
-else:
-    job=ijob.Job(1 if len([cls for cls in clsuse if cls=='dnn' or cls[:3]=='cnn'])>0 else maxjob)
+                if len(restst) > 0:
+                    np.save(resfn[:-4] + '_tst.npy', restst)
+                if len(restrn) > 0:
+                    np.save(resfn[:-4] + '_trn.npy', restrn)
+                if mod is not None:
+                    modfn = os.path.join(dmod, cls + '_' + fea + '_' + s + '.model')
+                    eval('i' + cls[:3] + '.save')(mod, modfn)
+                break
+
+
+if senuse is None:
+    run_sen(senuse)
+elif len(senuse)==1:
+    run_sen(senuse[0])
+else :
+    #job=ijob.Job(1 if len([cls for cls in clsuse if cls=='dnn' or cls[:3]=='cnn'])>0 else maxjob)
     for s in senuse:
-        if os.path.exists('stop'): job.cleanup(); raise SystemExit()
-        job.start('run_'+s,run_sen,(s,))
-    for s in senuse: job.res('run_'+s)
+        run_sen(s)
+    #    if os.path.exists('stop'): job.cleanup(); raise SystemExit()
+    #    job.start('run_'+s,run_sen,(s,))
+    #for s in senuse: job.res('run_'+s)
 
 # %bg _ip.magic('run -i foo.py')
 
