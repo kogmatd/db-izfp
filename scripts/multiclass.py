@@ -146,7 +146,10 @@ ftrn=icfg.readflst('train')
 ftst=icfg.readflst('test')
 
 dmod=icfg.getdir('model')
+if not os.path.exists(dmod): os.mkdir(dmod)
 dlog=icfg.getdir('log')
+if not os.path.exists(dlog): os.mkdir(dlog)
+#if os.path.exists(resfn): continue
 sen=getsensors()
 regression=icfg.get('trn.regression')==True
 
