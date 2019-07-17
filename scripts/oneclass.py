@@ -25,7 +25,9 @@ import ihelp
 from ihelp import *
 
 def prtres(prob,flst):
-    eer,cm = icls.eer(prob,flst=flst,okpat='Z0[0-2]' if icfg.get('db')=='izfp/cfk' else 'Z00')
+    oklab = list(set(map(lambda x: x['lab'],flst)))
+    oklab.sort()
+    eer,cm = icls.eer(prob,flst=flst,okpat=oklab[0]) #good label
     return 'EER: %6.2f%% CM: %6.2f%%'%(eer*100,cm*100)
 
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
@@ -46,13 +48,8 @@ def hmmtrn(ftrn,ftst,fea,s,kwargs={}):
 
 def ktftrn(ftrn,ftst,fea,s,kwargs={}):
     print('dnn start  '+s)
-    config = dict()
-    config['batchsize'] = 32
-    config['epochs'] = 10
-    config['lay'] = [('relu',300),('batch',), ('dropout',0.5), ('relu',100),('batch',),('dropout',0.5)]
-    ktf = iktf.ModKeras(**config)
+    ktf = iktf.ModKeras(**kwargs)
     ktf.trn(ftrn, fea)
-    #restrn=ktf.evl(ftrn, fea, prob=True)
     prob = ktf.evl(ftst, fea, prob=True)[:,0]
     # probability of class 0
     prob = 1-prob
@@ -146,28 +143,46 @@ ftst=icfg.readflst('test')
 #fdev=[] if icfg.get('flist.dev') is None else icfg.readflst('dev')
 
 dmod=icfg.getdir('model')
+if not os.path.exists(dmod): os.mkdir(dmod)
 dlog=icfg.getdir('log')
+if not os.path.exists(dlog): os.mkdir(dlog)
 dsig=icfg.getdir('sig')
 sigext='.'+icfg.get('sig.ext','wav')
 sen=getsensors()
 
 senuse=sen
 feause=['pfa','sfa','sig']
-clsuse=['hmm','svm']
+clsuse=['hmm','svm','cnnb','cnn','dnn','ktf']
 if not icfg.get('senuse') is None: senuse=icfg.get('senuse').split(',')
 if not icfg.get('feause') is None: feause=icfg.get('feause').split(',')
 if not icfg.get('clsuse') is None: clsuse=icfg.get('clsuse').split(',')
 
+labmap={}
+labmap=getlabmaps()
+if not icfg.get('labmap') is None: labmap=icfg.get('labmap'); labmap=eval(labmap)
+
 maxjobs=16
 
-# Generate ftrns & ftsts for universal background model
-ftrns={}
-for strn in senuse:
-    ftrns[strn] = []
-    ftrns[strn] = ftrn.expandsensor(sen)
-    for f in ftrns[strn]: f['lab'] = 'Z00' if f['sen']==strn else 'Zxx'
-    ftrns[strn] = ftrns[strn].equalcls()
-ftsts = {s: ftst.expandsensor(s) for s in senuse}
+# the first label is of interest
+if labmap is not None:
+    ftrn = ftrn.maplab(labmap)
+    ftst = ftst.maplab(labmap)
+
+if senuse is not None:
+    ftrns = {}
+    for strn in senuse:
+        ftrns[strn] = []
+        ftrns[strn] = ftrn.expandsensor(sen)
+        for f in ftrns[strn]: f['lab'] = labmap[list(labmap.keys())[0]] if f['sen']==strn else labmap[list(labmap.keys())[1]]
+        ftrns[strn] = ftrns[strn].equalcls()
+    ftsts = {s: ftst.expandsensor(s) for s in senuse}
+else:
+    sen=icfg.get('db')
+    senuse = [sen]
+    ftrns = {}
+    ftsts = {}
+    ftrns[sen] = ftrn
+    ftsts[sen] = ftst
 
 if not 'fdb' in locals():
     fdb = ifdb.Fdb()
@@ -199,9 +214,9 @@ if '-n' in sys.argv: raise SystemExit()
 print('cls')
 for cls in clsuse:
     for fea in feause:
-        if cls=='hmm' and ftrns[senuse[0]][0][fea].shape[-1]>40: continue
+        if cls=='hmm' and ftrns[senuse[0]][0][fea].shape[-1] > 40: continue
         probfn=os.path.join(dlog,'prob_'+cls+'_'+fea+'.npy')
-        if os.path.exists(probfn): continue
+        #if os.path.exists(probfn): continue
         kwargs=icfg.get('trnargs.%s.%s'%(cls,fea))
         if kwargs is None: kwargs={}
         else:
