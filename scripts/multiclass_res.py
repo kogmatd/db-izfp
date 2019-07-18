@@ -40,13 +40,12 @@ def plot_reg(lab,mres,name):
         f.write('#-typ yerrorlines\n')
         for p in pl: f.write('%i %.3f %.3f\n'%p)
 
-
 if len(sys.argv)<2: raise ValueError("Usage: "+sys.argv[0]+" (CFG prob_*.npy | csv)")
-if sys.argv[1]=='csv':
-    for cfgi in range(1,4):
-        cfg='../cfk/X%i/info/default.cfg'%cfgi
-        os.system(str.join(' ',['python3',sys.argv[0],cfg,'csv']))
-    raise SystemExit()
+#if sys.argv[1]=='csv':
+#    for cfgi in range(1,4):
+#        cfg='../cfk/X%i/info/default.cfg'%cfgi
+#        os.system(str.join(' ',['python3',sys.argv[0],cfg,'csv']))
+#    raise SystemExit()
 icfg.Cfg(sys.argv[1])
 ocsv=len(sys.argv)>2 and sys.argv[2]=='csv'
 if ocsv: sys.argv.remove('csv')
@@ -131,14 +130,6 @@ for fea in feas:
             ))
             bcor=[cor(r,lab) for r in res]
             bmse=[mse(r,lab) for r in res]
-            #print('%s %-7s [%3i/%3i] BEST cor: %.3f/%s mse: %5.2f/%s'%(
-            #    fea,cls,len(resh[cls][fea]),len(sen),
-            #    np.max(bcor),str(np.argmax(bcor)),
-            #    np.max(bmse),str(np.argmax(bmse)),
-            #))
-            #ipl.p2((lab,mres),nox=True,title=fea+' '+cls)
-            #ipl.p2(res,nox=True,title=fea+' '+cls)
-            #raise SystemExit()
             plot_reg(lab,mres,fea+'_'+cls)
         else:
             cmax=np.max(c)
@@ -196,11 +187,4 @@ for fea in feas:
                     cmix*100,msg
                 ))
     print('')
-
-#plt_clsmeanstd(np.array([r['res'] for r in resh['hmm']['pfa'].values()]),ftst)
-#plt_clsmeanstd(np.array([r['res'] for r in resh['hmm']['pfa'].values()]).mean(0),ftst)
-
-#resmat=np.array([[(resh[cls][fea][si]['c'] if si in resh[cls][fea] else 0) for si in sens] for fea in feas for cls in sorted(resh) if fea in resh[cls]])
-#ipl.p2(resmat,nox=True)
-#ipl.p2(resmat[:,np.argsort(resmat.mean(axis=0))])
 

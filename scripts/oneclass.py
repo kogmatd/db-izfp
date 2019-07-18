@@ -177,12 +177,11 @@ if senuse is not None:
         ftrns[strn] = ftrns[strn].equalcls()
     ftsts = {s: ftst.expandsensor(s) for s in senuse}
 else:
-    sen=icfg.get('db')
-    senuse = [sen]
+    sen=senuse = [icfg.get('db')]
     ftrns = {}
     ftsts = {}
-    ftrns[sen] = ftrn
-    ftsts[sen] = ftst
+    ftrns[sen[0]] = ftrn
+    ftsts[sen[0]] = ftst
 
 if not 'fdb' in locals():
     fdb = ifdb.Fdb()
