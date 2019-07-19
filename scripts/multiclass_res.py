@@ -80,7 +80,10 @@ for fn in argv2resfns('res_',sys.argv[2:]):
         h['c']=0
     else:
         if cls=='hmm': res=-res
-        h['resc']=resc=lcls[res.argmax(axis=-1)]
+        if (res.shape[1]==1):
+            h['resc'] = resc = lcls[np.round(res[:,0]).astype(int)]
+        else:
+            h['resc']= resc = lcls[res.argmax(axis=-1)]
         h['c']=np.sum(resc==[f['lab'] for f in ftst])/len(ftst)
     if not cls in resh: resh[cls]={}
     if not fea in resh[cls]: resh[cls][fea]={}

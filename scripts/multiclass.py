@@ -29,11 +29,13 @@ icnn=idnn
 def svmtrn(ftrn,ftst,fea,s,kwargs={}):
     print('svm start  '+fea+'_'+s)
     csvm=isvm.trn(ftrn, fea, **kwargs)
-    restrn=isvm.evl(csvm, ftrn, fea)
-    restst=isvm.evl(csvm, ftst, fea)
+    restrn=isvm.evlp(csvm, ftrn, fea)
+    restst=isvm.evlp(csvm, ftst, fea)
+    restrnc = isvm.evl(csvm, ftrn, fea)
+    reststc = isvm.evl(csvm, ftst, fea)
     if not regression:
-        icls.cmp(ftrn, restrn, 'svm finish ')
-        icls.cmp(ftst, restst, 'svm finish ')
+        icls.cmp(ftrn, restrnc, 'svm finish ')
+        icls.cmp(ftst, reststc, 'svm finish ')
     print('svm finish '+fea+'_'+s)
     return (csvm,restrn,restst)
 
