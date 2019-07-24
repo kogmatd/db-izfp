@@ -234,13 +234,5 @@ for cls in clsuse:
         if len(prob) > 0:
             np.save(probfn,prob)
 
-
-#x=dnntest('A1A2','sig',max_iter=200,lay=[('conv',[7,1],20,[5,1]),('ip',200),('dropout',0.5),('relu',),('ip',)])
-#x=dnntest('A1A2','pfa',max_iter=200,lay=[('ip',20),('relu',),('ip',)],weight_decay=0.1)
-#x=dnntest('A1A2','pfa',max_iter=200,lay=[('ip',200),('dropout',0.5),('relu',),('ip',)])
-#x=dnntest('A1A2','pfa',max_iter=200,lay=[('conv',7,20,5),('ip',200),('dropout',0.5),('relu',),('ip',)],weight_decay=0.01)
-
-# %bg _ip.magic('run -i foo.py')
-
 raise SystemExit()
 
