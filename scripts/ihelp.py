@@ -22,7 +22,29 @@ def argv2resfns(pat,fns):
             i+=len(ins)
         else: i+=1
     return fns
-    
+
+def getsplits():
+    split = icfg.get('am.train.split')
+    ite = []
+    if split is not None:
+        for s in range(split+1):
+            key = 'am.train.ite%d' % s
+            itx = icfg.get(key)
+            ite.append(itx)
+    return split, ite
+
+def getstates():
+    fn=icfg.getfile('am.classes','info','classes.txt')
+    if fn is None: return None
+    with open(fn) as fd:
+        rows = (re.sub('#.*|\n|\r|^[ \t]+|[ \t]+$', '', line).split('\t') for line in fd)
+        classes = []
+        states = []
+        for row in rows :
+            if row[0] != '' and row[1] != '':
+                classes.append(row[0])
+                states.append(row[1])
+    return classes, states
 
 def getsensors():
     fn=icfg.getfile('am.sensors','info','sensors.txt')
