@@ -55,10 +55,8 @@ def ktftrn(ftrn, ftst, fea, s, kwargs={}):
     print('Keras TF start  ' + s)
     ktf = iktf.ModKeras(**kwargs)
     ktf.trn(ftrn, fea)
-    restrn = ktf.evl(ftrn, fea, prob=True)
-    restst = ktf.evl(ftst, fea, prob=True)
-    restrnc = ktf.evl(ftrn, fea, prob=False)
-    reststc = ktf.evl(ftst, fea, prob=False)
+    restrn, trncls = ktf.evl(ftrn, fea, prob=True)
+    restst, tstcls = ktf.evl(ftst, fea, prob=True)
     if regression:
         icls.labf(ftrn)
         icls.labf(ftst)
@@ -67,8 +65,10 @@ def ktftrn(ftrn, ftst, fea, s, kwargs={}):
         print('Train mse : ', np.square(np.subtract(np.array(trn), restrn[:,0])).mean())
         print('Test mse : ', np.square(np.subtract(np.array(tst), restst[:,0])).mean())
     else:
-        icls.cmp(ftrn, restrnc, 'Keras TF Training ' + fea + '_' + s)
-        icls.cmp(ftst, reststc, 'Keras TF Testing ' + fea + '_' + s)
+        icls.cmp(ftrn, trncls, 'Keras TF Training ' + fea + '_' + s)
+        icls.report(ftrn, trncls, verbose=True)
+        icls.cmp(ftst, tstcls, 'Keras TF Testing ' + fea + '_' + s)
+        icls.report(ftst, tstcls, verbose=True)
     print('Keras TF stop  ' + s)
     return ktf.mod, restrn, restst
 

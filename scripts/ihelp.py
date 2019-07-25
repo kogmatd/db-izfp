@@ -33,18 +33,31 @@ def getsplits():
             ite.append(itx)
     return split, ite
 
-def getstates():
-    fn=icfg.getfile('am.classes','info','classes.txt')
-    if fn is None: return None
+def getstates(map):
+    fn = icfg.getfile('am.classes','info','classes.txt')
+    if fn is None:
+        return None
     with open(fn) as fd:
         rows = (re.sub('#.*|\n|\r|^[ \t]+|[ \t]+$', '', line).split('\t') for line in fd)
+        state_class = {}
         classes = []
         states = []
-        for row in rows :
+        for row in rows:
             if row[0] != '' and row[1] != '':
                 classes.append(row[0])
                 states.append(row[1])
-    return classes, states
+
+        for idx, cls in enumerate(classes):
+            for k, v in map.items():
+                if re.match(k, cls):
+                    classes[idx] = v
+                    if v in state_class:
+                        if state_class[v] < states[idx]:
+                            state_class[v] = states[idx]
+                    else:
+                        state_class[v] = states[idx]
+
+    return list(state_class.keys()), list(state_class.values())
 
 def getsensors():
     fn=icfg.getfile('am.sensors','info','sensors.txt')
