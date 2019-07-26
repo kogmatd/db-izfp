@@ -14,30 +14,30 @@ sys.path.append(os.environ['UASR_HOME']+'-py')
 def prtres(prob, flst):
     oklab = list(set(map(lambda x: x['lab'], flst)))
     oklab.sort()
-    eer, cm = icls.eer(prob, flst=flst, okpat=oklab[0]) #good label
+    eer, cm = icls.eer(prob, flst=flst, okpat=oklab[0])
     return 'EER: %6.2f%% CM: %6.2f%%' % (eer*100, cm*100)
 
 
-def svmtrn(ftrn, ftst, fea, s, kwargs={}):
+def svmtrn(ftrn, ftst, fea, s, args):
     print('svm start  '+s)
-    csvm=isvm.trn(ftrn, fea, **kwargs)
-    prob=isvm.evlp(csvm, ftst, fea)[:, 0]
+    csvm = isvm.trn(ftrn, fea, **args)
+    prob = isvm.evlp(csvm, ftst, fea)[:, 0]
     print('svm finish '+s+' '+prtres(prob, ftst))
     return prob
 
 
-def hmmtrn(ftrn, ftst, fea, s, kwargs={}):
+def hmmtrn(ftrn, ftst, fea, s, args):
     print('hmm start  '+s)
-    chmm = ihmm.trn(flst=ftrn, fea=fea, **kwargs)
+    chmm = ihmm.trn(flst=ftrn, fea=fea, **args)
     nld = ihmm.evlp(chmm, flst=ftst, fea=fea)
-    prob = -nld.take(0, -1)/np.array([f[fea].shape[0] for f in ftst])
-    print('hmm finish '+s+' '+prtres(prob,ftst))
+    prob = -nld.take(0, -1)/np.array([ft[fea].shape[0] for ft in ftst])
+    print('hmm finish '+s+' '+prtres(prob, ftst))
     return np.concatenate((prob.reshape(-1, 1), nld), axis=1)
 
 
-def ktftrn(ftrn, ftst, fea, s, kwargs={}):
+def ktftrn(ftrn, ftst, fea, s, args):
     print('dnn start  '+s)
-    ktf = iktf.ModKeras(**kwargs)
+    ktf = iktf.ModKeras(**args)
     ktf.trn(ftrn, fea)
     prob, bc = ktf.evl(ftst, fea, prob=True)
     # probability of class 0
@@ -48,6 +48,7 @@ def ktftrn(ftrn, ftst, fea, s, kwargs={}):
         prob = 1 - prob
     return prob
 
+
 if len(sys.argv) < 2:
     raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
 icfg.Cfg(*sys.argv[1:])
@@ -56,13 +57,13 @@ if '-nn' in sys.argv:
     raise SystemExit()
 
 print("flst")
-ftrn = icfg.readflst('train')
-ftst = icfg.readflst('test')
+ftrain = icfg.readflst('train')
+ftest = icfg.readflst('test')
 
 dmod = icfg.getdir('model')
 if not os.path.exists(dmod):
     os.mkdir(dmod)
-dlog=icfg.getdir('log')
+dlog = icfg.getdir('log')
 if not os.path.exists(dlog):
     os.mkdir(dlog)
 dsig = icfg.getdir('sig')
@@ -71,8 +72,8 @@ sigext = '.'+icfg.get('sig.ext', 'wav')
 sen = getsensors()
 
 senuse = sen
-feause = ['pfa','sfa','sig']
-clsuse = ['hmm','svm','cnnb','cnn','dnn','ktf']
+feause = ['pfa', 'sfa', 'sig']
+clsuse = ['hmm', 'svm', 'ktf']
 if not icfg.get('senuse') is None:
     senuse = icfg.get('senuse').split(',')
 if not icfg.get('feause') is None:
@@ -80,43 +81,42 @@ if not icfg.get('feause') is None:
 if not icfg.get('clsuse') is None:
     clsuse = icfg.get('clsuse').split(',')
 
-labmap = {}
 labmap = getlabmaps()
 if not icfg.get('labmap') is None:
     labmap = icfg.get('labmap')
     labmap = eval(labmap)
 
-maxjobs=16
+maxjobs = 16
 
 # the first label is of interest
 if labmap is not None:
-    ftrn = ftrn.maplab(labmap)
-    ftst = ftst.maplab(labmap)
+    ftrain = ftrain.maplab(labmap)
+    ftest = ftest.maplab(labmap)
 
 if senuse is not None:
     ftrns = {}
     for strn in senuse:
         ftrns[strn] = []
-        ftrns[strn] = ftrn.expandsensor(sen)
+        ftrns[strn] = ftrain.expandsensor(sen)
         for f in ftrns[strn]:
-            f['lab'] = labmap[list(labmap.keys())[0]] if f['sen']==strn else labmap[list(labmap.keys())[1]]
+            f['lab'] = labmap[list(labmap.keys())[0]] if f['sen'] == strn else labmap[list(labmap.keys())[1]]
         ftrns[strn] = ftrns[strn].equalcls()
-    ftsts = {s: ftst.expandsensor(s) for s in senuse}
+    ftsts = {s: ftest.expandsensor(s) for s in senuse}
 else:
     sen = senuse = [icfg.get('db')]
-    ftrns = {}
-    ftsts = {}
-    ftrns[sen[0]] = ftrn
-    ftsts[sen[0]] = ftst
+    ftrns = dict()
+    ftsts = dict()
+    ftrns[sen[0]] = ftrain
+    ftsts[sen[0]] = ftest
 
 fdb = ifdb.Fdb()
-for typ in ['sig','pfa']:
+for typ in ['sig', 'pfa']:
     print(typ)
-    fdb.analyse(typ, eval(typ+'get'), flst=sum(ftrns.values(), [])+sum(ftsts.values(),[]), jobs=maxjobs)
+    fdb.analyse(typ, eval(typ+'get'), flst=sum(ftrns.values(), [])+sum(ftsts.values(), []), jobs=maxjobs)
 fdb.save()
 
 print('sfa')
-do = set(s for s in senuse if any(not 'sfa' in f for f in ftrns[s]+ftsts[s]))
+do = set(s for s in senuse if any('sfa' not in f for f in ftrns[s]+ftsts[s]))
 if len(do) == 1 or maxjobs == 1:
     for s in do:
         sfaget(ftrns[s], ftsts[s], fdb)
@@ -127,7 +127,7 @@ else:
             thr.cleanup()
             raise SystemExit()
         print('sfa start  '+s)
-        thr.start('sfa_'+s, sfaget,(ftrns[s], ftsts[s], fdb))
+        thr.start('sfa_'+s, sfaget, (ftrns[s], ftsts[s], fdb))
     for s in do:
         thr.res('sfa_'+s)
 
@@ -136,12 +136,12 @@ if '-n' in sys.argv:
 
 print('cls')
 for cls in clsuse:
-    for fea in feause:
-        if cls == 'hmm' and ftrns[senuse[0]][0][fea].shape[-1] > 40:
+    for feature in feause:
+        if cls == 'hmm' and ftrns[senuse[0]][0][feature].shape[-1] > 40:
             continue
-        probfn = os.path.join(dlog, 'prob_'+cls+'_'+fea+'.npy')
+        probfn = os.path.join(dlog, 'prob_'+cls+'_'+feature+'.npy')
 
-        kwargs = icfg.get('trnargs.%s.%s' % (cls, fea))
+        kwargs = icfg.get('trnargs.%s.%s' % (cls, feature))
         if kwargs is None:
             kwargs = {}
             if cls == 'hmm':
@@ -155,19 +155,18 @@ for cls in clsuse:
             print('trnargs = ' + kwargs)
             kwargs = eval(kwargs)
         fnctrn = eval(cls+'trn')
-        if len(senuse) == 1 or maxjobs == 1 or cls=='ktf':
-            prob = [fnctrn(ftrns[s], ftsts[s], fea, s, kwargs) for s in senuse]
+        if len(senuse) == 1 or maxjobs == 1 or cls == 'ktf':
+            probability = [fnctrn(ftrns[s], ftsts[s], feature, s, kwargs) for s in senuse]
         else:
             job = ijob.Thr(maxjobs)
             for s in senuse:
                 if os.path.exists('stop'):
                     job.cleanup()
                     raise SystemExit()
-                job.start(cls+'trn_'+s, fnctrn, (ftrns[s], ftsts[s], fea, s, kwargs))
-            prob = [job.res(cls+'trn_'+s) for s in senuse]
+                job.start(cls+'trn_'+s, fnctrn, (ftrns[s], ftsts[s], feature, s, kwargs))
+            probability = [job.res(cls+'trn_'+s) for s in senuse]
 
-        if len(prob) > 0:
-            np.save(probfn, prob)
+        if len(probability) > 0:
+            np.save(probfn, probability)
 
 raise SystemExit()
-
