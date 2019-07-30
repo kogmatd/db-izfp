@@ -73,6 +73,16 @@ def ktftrn(ftrn, ftst, fea, s, args):
     return ktf.mod, restrn, restst
 
 
+snntrn=ktftrn
+aectrn=ktftrn
+rnntrn=ktftrn
+cnntrn=ktftrn
+
+icnn=iktf
+iaec=iktf
+irnn=iktf
+icnn=iktf
+
 if len(sys.argv) < 2:
     raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
 icfg.Cfg(*sys.argv[1:])
@@ -125,6 +135,7 @@ def run_sen(s):
 
     trn_labels = list(map(lambda x: x['lab'], ftrns))
     trn_nclasses = len(set(trn_labels))
+
     if trn_nclasses < 2 and not regression:
         raise ValueError("Multiclass classification cannot be trained on one class")
 
@@ -161,6 +172,7 @@ def run_sen(s):
                 print('trnargs = '+kwargs)
                 kwargs = eval(kwargs)
             kwargs['regression'] = regression
+            kwargs['type'] = cls
             fnctrn = eval(cls[:3]+'trn')
             for i in range(3):
                 (mod, restrn, restst) = fnctrn(ftrns, ftsts, fea, s, kwargs)

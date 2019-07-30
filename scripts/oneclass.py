@@ -49,6 +49,17 @@ def ktftrn(ftrn, ftst, fea, s, args):
     return prob
 
 
+snntrn=ktftrn
+aectrn=ktftrn
+rnntrn=ktftrn
+cnntrn=ktftrn
+
+icnn=iktf
+iaec=iktf
+irnn=iktf
+icnn=iktf
+
+
 if len(sys.argv) < 2:
     raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
 icfg.Cfg(*sys.argv[1:])
@@ -154,6 +165,7 @@ for cls in clsuse:
         else:
             print('trnargs = ' + kwargs)
             kwargs = eval(kwargs)
+            kwargs['type'] = cls
         fnctrn = eval(cls+'trn')
         if len(senuse) == 1 or maxjobs == 1 or cls == 'ktf':
             probability = [fnctrn(ftrns[s], ftsts[s], feature, s, kwargs) for s in senuse]
