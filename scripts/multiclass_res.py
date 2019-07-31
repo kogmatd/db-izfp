@@ -24,7 +24,11 @@ def mse(x, y):
 
 
 def plot_reg(labb, mress, name):
-    fnn = 'res/reg/'+name+'.plot'
+    res_reg ='res/reg/'
+    fnn = res_reg + name + '.plot'
+    if not os.path.exists(res_reg):
+        os.mkdir(res_reg)
+
     labc = rle(labb)
     pl = [(l, np.mean(mress[s1:s1+e]), np.std(mress[s1:s1+e])) for s1, e, l in labc]
     with open(fnn, 'w') as f:
