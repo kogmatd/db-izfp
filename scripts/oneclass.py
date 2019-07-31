@@ -46,18 +46,19 @@ def ktftrn(ftrn, ftst, fea, s, args):
         print('ktf stop  '+s+' '+prtres(prob, ftst))
     else:
         prob = 1 - prob
+        print('ktf stop  ' + s + ' ' + prtres(prob, ftst))
     return prob
 
 
-snntrn=ktftrn
-aectrn=ktftrn
-rnntrn=ktftrn
-cnntrn=ktftrn
+snntrn = ktftrn
+aectrn = ktftrn
+rnntrn = ktftrn
+cnntrn = ktftrn
 
-icnn=iktf
-iaec=iktf
-irnn=iktf
-icnn=iktf
+isnn = iktf
+iaec = iktf
+irnn = iktf
+icnn = iktf
 
 
 if len(sys.argv) < 2:
@@ -150,7 +151,7 @@ for cls in clsuse:
     for feature in feause:
         if cls == 'hmm' and ftrns[senuse[0]][0][feature].shape[-1] > 40:
             continue
-        probfn = os.path.join(dlog, 'prob_'+cls+'_'+feature+'.npy')
+        probfn = os.path.join(dlog, 'prob_' + cls + '_' + feature + '.npy')
 
         kwargs = icfg.get('trnargs.%s.%s' % (cls, feature))
         if kwargs is None:

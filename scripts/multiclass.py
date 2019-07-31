@@ -73,15 +73,15 @@ def ktftrn(ftrn, ftst, fea, s, args):
     return ktf.mod, restrn, restst
 
 
-snntrn=ktftrn
-aectrn=ktftrn
-rnntrn=ktftrn
-cnntrn=ktftrn
+snntrn = ktftrn
+aectrn = ktftrn
+rnntrn = ktftrn
+cnntrn = ktftrn
 
-icnn=iktf
-iaec=iktf
-irnn=iktf
-icnn=iktf
+isnn = iktf
+iaec = iktf
+irnn = iktf
+icnn = iktf
 
 if len(sys.argv) < 2:
     raise ValueError("Usage: "+sys.argv[0]+" CFG [-n]")
