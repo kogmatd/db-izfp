@@ -103,7 +103,7 @@ regression = icfg.get('trn.regression') == True
 
 senuse = sen
 feause = ['pfa', 'sfa', 'sig']
-clsuse = ['hmm', 'svm', 'ktf']
+clsuse = ['hmm', 'svm', 'snn','cnn']
 if not icfg.get('senuse') is None:
     senuse = icfg.get('senuse').split(',')
 if not icfg.get('feause') is None:
@@ -169,6 +169,8 @@ def run_sen(s):
                         kwargs['its'] = its
                     if states is not None:
                         kwargs['states'] = states
+                    #elif cls == 'svm':
+
             else:
                 print('trnargs = '+kwargs)
                 kwargs = eval(kwargs)

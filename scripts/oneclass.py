@@ -11,8 +11,6 @@ import ifdb
 from ihelp import *
 
 
-
-
 def prtres(prob, flst):
     oklab = list(set(map(lambda x: x['lab'], flst)))
     oklab.sort()
