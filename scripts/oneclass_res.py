@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 
 import sys
-from ihelp import *
-
+import os
 sys.path.append(os.environ['UASR_HOME']+'-py')
+from ihelp import *
 
 
 def plot_roc(ftst, nld):

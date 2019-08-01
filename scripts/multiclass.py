@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
 import sys
+import os
+sys.path.append(os.environ['UASR_HOME']+'-py')
 import isvm
 import ihmm
 import iktf
 import ifdb
 from ihelp import *
-sys.path.append(os.environ['UASR_HOME']+'-py')
 
 
 def svmtrn(ftrn, ftst, fea, s, args):

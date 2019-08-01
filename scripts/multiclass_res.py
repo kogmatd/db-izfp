@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 
 import sys
+import os
+sys.path.append(os.environ['UASR_HOME']+'-py')
 import idat
 import ilinreg
 from ihelp import *
 from ihlp import *
-
-sys.path.append(os.environ['UASR_HOME']+'-py')
-
 
 def cor(x, y):
     a = x-np.mean(x)
