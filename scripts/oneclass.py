@@ -168,7 +168,7 @@ for cls in clsuse:
             kwargs = eval(kwargs)
             kwargs['type'] = cls
         fnctrn = eval(cls+'trn')
-        if len(senuse) == 1 or maxjobs == 1 or cls == 'ktf':
+        if len(senuse) == 1 or maxjobs == 1 or cls in ['snn', 'cnn', 'aec', 'rnn']:
             probability = [fnctrn(ftrns[s], ftsts[s], feature, s, kwargs) for s in senuse]
         else:
             job = ijob.Thr(maxjobs)
