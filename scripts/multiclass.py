@@ -170,12 +170,12 @@ def run_sen(s):
                     if states is not None:
                         kwargs['states'] = states
                     #elif cls == 'svm':
-
             else:
                 print('trnargs = '+kwargs)
                 kwargs = eval(kwargs)
             kwargs['regression'] = regression
-            kwargs['type'] = cls
+            if cls not in ['hmm', 'svm']:
+                kwargs['type'] = cls
             fnctrn = eval(cls[:3]+'trn')
             for i in range(3):
                 (mod, restrn, restst) = fnctrn(ftrns, ftsts, fea, s, kwargs)

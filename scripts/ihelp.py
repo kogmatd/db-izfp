@@ -54,7 +54,7 @@ def getstates(labmap):
                     states.append(row[1])
                 else:
                     continue
-        if map is not None:
+        if labmap is not None:
             for idx, cls in enumerate(classes):
                 for k, v in labmap.items():
                     if re.match(k, cls):
