@@ -103,7 +103,7 @@ regression = icfg.get('trn.regression') == True
 
 senuse = sen
 feause = ['pfa', 'sfa', 'sig']
-clsuse = ['hmm', 'svm', 'snn','cnn']
+clsuse = ['hmm', 'svm', 'snn', 'cnn']
 if not icfg.get('senuse') is None:
     senuse = icfg.get('senuse').split(',')
 if not icfg.get('feause') is None:

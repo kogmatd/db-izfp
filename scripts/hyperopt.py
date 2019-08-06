@@ -37,14 +37,13 @@ from talos.metrics.keras_metrics import fmeasure_acc
 import icls
 
 
-
 def dataset(flst, fea, lab, clstype='snn', regression=False):
     '''
     Prepare the dataset and reshape to
     to 3D tensors.
     '''
 
-    scaler = MinMaxScaler(feature_range=(-1, 1))
+    scaler = MinMaxScaler(feature_range=(-1,1))
 
     trn_array = np.array(list(map(lambda x: x[fea].dat, flst)))
 
@@ -55,10 +54,11 @@ def dataset(flst, fea, lab, clstype='snn', regression=False):
 
     dims = trn_array.shape
     s0, s1, s2 = dims[0], dims[1], dims[2]
-    x_train = trn_array.reshape(s0 * s1, s2)
+
+    x_train = trn_array.reshape(s0, s1 * s2)
 
     scaler.fit(x_train)
-    # apply transform
+
     x_train = scaler.transform(x_train)
 
     '''Convolutional input needs 1D (batch, steps, channels) or
@@ -82,7 +82,6 @@ def dataset(flst, fea, lab, clstype='snn', regression=False):
         trn_labels = list(map(lambda x: x[lab], flst))
         encoder = LabelBinarizer()
         trn_labels = encoder.fit_transform(trn_labels)
-        del encoder
 
     return trn_data, trn_labels
 
@@ -104,13 +103,13 @@ def snnopt(ftrn, ftst, fea, s, kwargs):
         model.add(Dropout(params['dropout']))
 
         ## hidden layers
-        for i in range(params['hidden_layers']):
-            print(f"adding layer {i + 1}")
-            model.add(Dense(params['hidden_neuron'], activation=params['last_activation'],
-                            kernel_initializer=params['kernel_initializer']))
-            model.add(Dropout(params['dropout']))
+        #for i in range(params['hidden_layers']):
+        #    print(f"adding layer {i + 1}")
+        #    model.add(Dense(params['hidden_neuron'], activation=params['last_activation'],
+        #                    kernel_initializer=params['kernel_initializer']))
+        #    model.add(Dropout(params['dropout']))
 
-        #hidden_layers(model, params, 1)
+        hidden_layers(model, params, y_train.shape[1])
 
         model.add(Dense(y_train.shape[1], activation=params['last_activation'],
                         kernel_initializer=params['kernel_initializer']))
@@ -127,16 +126,17 @@ def snnopt(ftrn, ftst, fea, s, kwargs):
         return history, model
 
     # then we can go ahead and set the parameter space
-    p = {'first_neuron': [300, 600],
-         'hidden_neuron': [300, 600],
-         'hidden_layers': [0, 1, 2],
-         'batch_size': [265],
-         'epochs': [5],
-         'dropout': [0.5],
-         'kernel_initializer': ['uniform', 'normal'],
+    p = {'first_neuron': [256, 512],
+         'hidden_neuron': [32, 64],
+         'hidden_layers': [0, 1],
+         'batch_size': [256],
+         'epochs': [10],
+         'dropout': [0.4, 0.6],
+         'kernel_initializer': ['normal'],
          'optimizer': [Adam],
          'losses': [categorical_crossentropy],
          'activation': [relu],
+         'shapes': ['brick'],
          'last_activation': ['softmax']}
 
     t = ta.Scan(x=x_train,
@@ -145,7 +145,7 @@ def snnopt(ftrn, ftst, fea, s, kwargs):
                 params=p,
                 dataset_name='snn',
                 experiment_no=fea,
-                print_params=True)
+                print_params=False)
 
     return None, None
 
