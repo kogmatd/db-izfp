@@ -3,14 +3,15 @@
 import sys
 import os
 sys.path.append(os.environ['UASR_HOME']+'-py')
-import isvm
-import ihmm
-import iktf
 import ifdb
+import iktf
+import ihmm
+import isvm
 from ihelp import *
 
 
 def svmtrn(ftrn, ftst, fea, s, args):
+
     print('svm start  '+fea+'_'+s)
     csvm = isvm.trn(ftrn, fea, **args)
     restrn = isvm.evlp(csvm, ftrn, fea)
@@ -34,7 +35,7 @@ def svmtrn(ftrn, ftst, fea, s, args):
 
 def hmmtrn(ftrn, ftst, fea, s, args):
     print('hmm start  '+fea+'_'+s)
-    chmm = ihmm.trn(flst=ftrn, fea=fea, **args)
+    chmm = ihmm.trn(flst=ftrn, fea=fea, **args, ftst=ftst)
     nldtrn = ihmm.evlp(chmm, flst=ftrn, fea=fea)
     nldtst = ihmm.evlp(chmm, flst=ftst, fea=fea)
     if regression:
@@ -169,7 +170,6 @@ def run_sen(s):
                         kwargs['its'] = its
                     if states is not None:
                         kwargs['states'] = states
-                    #elif cls == 'svm':
             else:
                 print('trnargs = '+kwargs)
                 kwargs = eval(kwargs)
